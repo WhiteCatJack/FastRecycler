@@ -17,11 +17,14 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
+        <!-- 高德API的key -->
         <meta-data
                 android:name="com.amap.api.v2.apikey"
                 android:value="7efeca1ad7e2ddf90eb223b366af2ffa"/>
+        <!-- 高德定位Service -->
+        <service android:name="com.amap.api.location.APSService"></service>
 
-        <activity android:name=".MainActivity">
+        <activity android:name=".MapActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
