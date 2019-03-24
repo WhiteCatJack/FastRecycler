@@ -16,7 +16,7 @@ public abstract class GarbageCanDataSource {
 
     private static volatile GarbageCanDataSource sInstance;
 
-    private GarbageCanDataSource() {
+    protected GarbageCanDataSource() {
     }
 
     public static GarbageCanDataSource getInstance() {

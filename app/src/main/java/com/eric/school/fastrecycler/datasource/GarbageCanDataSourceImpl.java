@@ -16,7 +16,7 @@ import cn.bmob.v3.listener.FindListener;
 class GarbageCanDataSourceImpl extends GarbageCanDataSource {
 
     @Override
-    void getAll(@NonNull FindListener<GarbageCan> listener) {
+    public void getAll(@NonNull FindListener<GarbageCan> listener) {
         if (listener == null) {
             return;
         }
