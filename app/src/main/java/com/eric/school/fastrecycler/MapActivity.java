@@ -15,17 +15,17 @@ import com.amap.api.location.AMapLocationListener;
 import com.amap.api.maps.AMap;
 import com.amap.api.maps.LocationSource;
 import com.amap.api.maps.MapView;
-import com.amap.api.maps.model.LatLng;
 import com.amap.api.maps.model.Marker;
 import com.amap.api.maps.model.MarkerOptions;
 import com.amap.api.maps.model.MyLocationStyle;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class MapActivity extends AppCompatActivity implements IMapContract.View {
 
     private static final int REQUEST_LOCATION_PERMISSION_CODE = 0x01;
+
+    private IMapContract.Presenter mPresenter;
 
     private MapView mMapView;
 
@@ -35,14 +35,15 @@ public class MapActivity extends AppCompatActivity implements IMapContract.View 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mPresenter = new MapPresenter(this);
         mMapView.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
 
         mMapView = findViewById(R.id.mv_map);
 
         initAMap();
-
         checkPermissionThenStartLocation();
+        mPresenter.getGarbageCansLocations();
     }
 
     /**
