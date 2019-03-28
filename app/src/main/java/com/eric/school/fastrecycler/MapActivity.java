@@ -25,7 +25,7 @@ public class MapActivity extends AppCompatActivity implements IMapContract.View 
 
     private static final int REQUEST_LOCATION_PERMISSION_CODE = 0x01;
 
-    private IMapContract.Presenter mPresenter;
+    private IMapContract.GarbageCanPresenter mGarbageCanPresenter;
 
     private MapView mMapView;
 
@@ -35,7 +35,7 @@ public class MapActivity extends AppCompatActivity implements IMapContract.View 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mPresenter = new MapPresenter(this);
+        mGarbageCanPresenter = new MapGarbageCanPresenter(this);
         setContentView(R.layout.activity_map);
 
         mMapView = findViewById(R.id.mv_map);
@@ -43,7 +43,7 @@ public class MapActivity extends AppCompatActivity implements IMapContract.View 
 
         checkPermission();
         initAMap();
-        mPresenter.getGarbageCansLocations();
+        mGarbageCanPresenter.getGarbageCansLocations();
     }
 
     /**
@@ -171,7 +171,6 @@ public class MapActivity extends AppCompatActivity implements IMapContract.View 
 
     @Override
     public void showGarbageCans(ArrayList<MarkerOptions> markerOptionsList) {
-        mAMap.getMapScreenMarkers().clear();
-        mAMap.addMarkers(markerOptionsList, false);
+        mAMap.addMarkers(markerOptionsList, true);
     }
 }

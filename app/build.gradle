@@ -17,6 +17,10 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        ndk {
+            //设置支持的SO库架构（开发者可以根据需要，选择一个或多个平台的so）
+            abiFilters "armeabi", "armeabi-v7a", "arm64-v8a", "x86","x86_64"
+        }
     }
     buildTypes {
         release {
@@ -30,14 +34,14 @@ android {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
+    //noinspection GradleCompatible
     implementation 'com.android.support:appcompat-v7:27.1.1'
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
-    implementation 'com.google.android.gms:play-services-auth:12.0.1'
 
-    // 高德导航
-    implementation 'com.amap.api:navi-3dmap:latest.integration'
-    // 高德定位
+    // 高德
+    implementation 'com.amap.api:3dmap:latest.integration'
     implementation 'com.amap.api:location:latest.integration'
+    implementation 'com.amap.api:search:latest.integration'
 
     // Bmob
     implementation 'cn.bmob.android:bmob-sdk:3.7.0'

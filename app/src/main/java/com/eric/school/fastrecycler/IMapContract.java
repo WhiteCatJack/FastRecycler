@@ -15,7 +15,11 @@ public interface IMapContract {
         void showGarbageCans(ArrayList<MarkerOptions> markerOptionsList);
     }
 
-    interface Presenter {
+    interface GarbageCanPresenter {
         void getGarbageCansLocations();
+    }
+
+    interface RoutePresenter {
+        void getRoute(ArrayList<GarbageCan> garbageCanList);
     }
 }
