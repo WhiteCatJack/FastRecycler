@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="您在此处回收了多少垃圾？(ml)"
+        android:textSize="17dp" />
+
+    <EditText
+        android:id="@+id/et_recycled_volume"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:digits="0123456789."
+        android:inputType="number"
+        android:textSize="14dp" />
+
+    <android.support.v7.widget.AppCompatButton
+        android:id="@+id/bt_submit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/colorPrimaryDark"
+        android:padding="12dp"
+        android:text="提交"
+        android:textSize="17dp" />
+
+</LinearLayout>

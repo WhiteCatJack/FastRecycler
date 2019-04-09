@@ -1,7 +1,10 @@
 package com.eric.school.fastrecycler;
 
 import android.Manifest;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -9,6 +12,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.EditText;
 
 import com.amap.api.location.AMapLocation;
 import com.amap.api.location.AMapLocationClient;
@@ -22,33 +26,34 @@ import com.amap.api.maps.model.LatLng;
 import com.amap.api.maps.model.Marker;
 import com.amap.api.maps.model.MarkerOptions;
 import com.amap.api.maps.model.MyLocationStyle;
-import com.amap.api.maps.model.Poi;
+import com.amap.api.navi.AMapNavi;
+import com.amap.api.navi.AMapNaviView;
 import com.amap.api.navi.AmapNaviPage;
 import com.amap.api.navi.AmapNaviParams;
 import com.amap.api.navi.AmapNaviType;
 import com.amap.api.navi.INaviInfoCallback;
+import com.amap.api.navi.enums.NaviType;
+import com.amap.api.navi.model.AMapCalcRouteResult;
 import com.amap.api.navi.model.AMapNaviLocation;
 import com.amap.api.services.core.LatLonPoint;
-import com.amap.api.services.route.BusRouteResult;
-import com.amap.api.services.route.DrivePath;
-import com.amap.api.services.route.DriveRouteResult;
-import com.amap.api.services.route.RideRouteResult;
-import com.amap.api.services.route.RouteSearch;
-import com.amap.api.services.route.WalkRouteResult;
 import com.eric.school.fastrecycler.base.BaseActivity;
 import com.eric.school.fastrecycler.bean.GarbageCan;
+import com.eric.school.fastrecycler.bean.GarbageRecord;
 import com.eric.school.fastrecycler.bean.RecyclerPlace;
 import com.eric.school.fastrecycler.user.UserEngine;
 import com.eric.school.fastrecycler.util.AMapUtil;
 import com.eric.school.fastrecycler.util.AndroidUtils;
-import com.eric.school.fastrecycler.util.overlay.DrivingRouteOverlay;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 import cn.bmob.v3.BmobQuery;
+import cn.bmob.v3.datatype.BmobDate;
 import cn.bmob.v3.exception.BmobException;
 import cn.bmob.v3.listener.FindListener;
+import cn.bmob.v3.listener.SaveListener;
+import es.dmoral.toasty.Toasty;
 
 public class MapActivity extends BaseActivity {
 
@@ -157,8 +162,35 @@ public class MapActivity extends BaseActivity {
             @Override
             public boolean onMarkerClick(Marker marker) {
                 int index = mMarkerOptionsList.indexOf(marker.getOptions());
-                GarbageCan garbageCan = mGarbageCanList.get(index);
-                AndroidUtils.showToast(garbageCan.getObjectId());
+                if (index > mGarbageCanList.size() - 1) {
+                    return false;
+                }
+                final GarbageCan garbageCan = mGarbageCanList.get(index);
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(MapActivity.this);
+                View layout = LayoutInflater.from(MapActivity.this).inflate(R.layout.dialog_input_recycled_garbage_volume, null);
+                final EditText editText = layout.findViewById(R.id.et_recycled_volume);
+                View submitButton = layout.findViewById(R.id.bt_submit);
+                builder.setView(layout);
+                final Dialog dialog = builder.create();
+                submitButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        GarbageRecord garbageRecord = new GarbageRecord();
+                        garbageRecord.setGarbageCan(garbageCan);
+                        garbageRecord.setDate(new BmobDate(Calendar.getInstance().getTime()));
+                        garbageRecord.setVolumeChange(Double.valueOf(editText.getText().toString()));
+                        garbageRecord.save(new SaveListener<String>() {
+                            @Override
+                            public void done(String s, BmobException e) {
+                                AndroidUtils.showToast("你成功上传了回收记录！");
+                                dialog.dismiss();
+                            }
+                        });
+                    }
+                });
+                dialog.show();
+
                 return true;
             }
         });
@@ -220,7 +252,11 @@ public class MapActivity extends BaseActivity {
         list.add(new LatLonPoint(garbageCanList.get(11).getLatitude(), garbageCanList.get(11).getLongitude()));
         list.add(new LatLonPoint(garbageCanList.get(13).getLatitude(), garbageCanList.get(13).getLongitude()));
         list.add(new LatLonPoint(garbageCanList.get(15).getLatitude(), garbageCanList.get(15).getLongitude()));
-        list.add(new LatLonPoint(recyclerPlace.getLatitude(), recyclerPlace.getLongitude()));
+        list.add(new LatLonPoint(garbageCanList.get(1).getLatitude(), garbageCanList.get(1).getLongitude()));
+        list.add(new LatLonPoint(garbageCanList.get(2).getLatitude(), garbageCanList.get(2).getLongitude()));
+        list.add(new LatLonPoint(garbageCanList.get(3).getLatitude(), garbageCanList.get(3).getLongitude()));
+        list.add(new LatLonPoint(garbageCanList.get(4).getLatitude(), garbageCanList.get(4).getLongitude()));
+        list.add(new LatLonPoint(garbageCanList.get(5).getLatitude(), garbageCanList.get(5).getLongitude()));
         getRoute(this, list);
     }
 
@@ -274,137 +310,26 @@ public class MapActivity extends BaseActivity {
                 .icon(BitmapDescriptorFactory.fromView(markerView));
     }
 
-    public void getRoute(final Context context, List<LatLonPoint> checkPoints) {
+    public void getRoute(final Context context, final List<LatLonPoint> checkPoints) {
         if (checkPoints == null || checkPoints.size() < 2) {
             return;
         }
-        LatLonPoint startLatLon = null, endLatLon = null;
-        final List<LatLonPoint> passedByPoints = new ArrayList<>();
-        for (int i = 0; i < checkPoints.size(); i++) {
-            LatLonPoint point = checkPoints.get(i);
-            if (i == 0) {
-                startLatLon = point;
-            } else if (i == checkPoints.size() - 1) {
-                endLatLon = point;
-            } else {
-                passedByPoints.add(point);
-            }
-        }
-        RouteSearch.FromAndTo fromAndTo = new RouteSearch.FromAndTo(startLatLon, endLatLon);
-        // 第一个参数表示路径规划的起点和终点，第二个参数表示驾车模式，第三个参数表示途经点，第四个参数表示避让区域，第五个参数表示避让道路
-        RouteSearch.DriveRouteQuery query = new RouteSearch.DriveRouteQuery(
-                fromAndTo, RouteSearch.DRIVING_SINGLE_SHORTEST, passedByPoints, null, "");
-        RouteSearch routeSearch = new RouteSearch(context);
-        final LatLonPoint finalStartLatLon = startLatLon;
-        final LatLonPoint finalEndLatLon = endLatLon;
-        routeSearch.setRouteSearchListener(new RouteSearch.OnRouteSearchListener() {
-            @Override
-            public void onBusRouteSearched(BusRouteResult result, int rCode) {
-            }
 
+        new Thread(new Runnable() {
             @Override
-            public void onDriveRouteSearched(DriveRouteResult result, int rCode) {
-                if (rCode == 1000 && result != null && result.getPaths() != null
-                        && result.getPaths().size() > 0) {
-                    DrivePath drivePath = result.getPaths().get(0);
-                    mAMap.clear();// 清理地图上的所有覆盖物
-                    DrivingRouteOverlay drivingRouteOverlay = new DrivingRouteOverlay(
-                            context, mAMap, drivePath, result.getStartPos(),
-                            result.getTargetPos(), passedByPoints);
-                    drivingRouteOverlay.removeFromMap();
-                    drivingRouteOverlay.addToMap();
-                    drivingRouteOverlay.zoomToSpan();
+            public void run() {
+                final ArrayList<LatLonPoint> path = AMapUtil.sortWayPointSeriesShortestPath(context, checkPoints);
+                path.add(new LatLonPoint(mRecyclerPlace.getLatitude(), mRecyclerPlace.getLongitude()));
 
-                    Poi start = AMapUtil.convertToPoi("下一位置", AMapUtil.convertToLatLng(finalStartLatLon));
-                    Poi end = AMapUtil.convertToPoi("下一位置", AMapUtil.convertToLatLng(finalEndLatLon));
-                    List<Poi> wayList = new ArrayList<>();
-                    for (LatLonPoint latLonPoint : passedByPoints) {
-                        wayList.add(AMapUtil.convertToPoi("下一位置", AMapUtil.convertToLatLng(latLonPoint)));
+                MapActivity.this.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Intent intent = new Intent(MapActivity.this, RouteNaviActivity.class);
+                        intent.putParcelableArrayListExtra("path", path);
+                        startActivity(intent);
                     }
-                    AmapNaviPage.getInstance().showRouteActivity(context, new AmapNaviParams(start, wayList, end, AmapNaviType.DRIVER), new INaviInfoCallback() {
-                        @Override
-                        public void onInitNaviFailure() {
-                            Log.e(TAG, "onInitNaviFailure() called");
-                        }
-
-                        @Override
-                        public void onGetNavigationText(String s) {
-                            Log.e(TAG, "onGetNavigationText() called with: s = [" + s + "]");
-                        }
-
-                        @Override
-                        public void onLocationChange(AMapNaviLocation aMapNaviLocation) {
-                            Log.e(TAG, "onLocationChange() called with: aMapNaviLocation = [" + aMapNaviLocation + "]");
-                        }
-
-                        @Override
-                        public void onArriveDestination(boolean b) {
-                            Log.e(TAG, "onArriveDestination() called with: b = [" + b + "]");
-                        }
-
-                        @Override
-                        public void onStartNavi(int i) {
-                            Log.e(TAG, "onStartNavi() called with: i = [" + i + "]");
-                        }
-
-                        @Override
-                        public void onCalculateRouteSuccess(int[] ints) {
-                            Log.e(TAG, "onCalculateRouteSuccess() called with: ints = [" + ints + "]");
-                        }
-
-                        @Override
-                        public void onCalculateRouteFailure(int i) {
-                            Log.e(TAG, "onCalculateRouteFailure() called with: i = [" + i + "]");
-                        }
-
-                        @Override
-                        public void onStopSpeaking() {
-                            Log.e(TAG, "onStopSpeaking() called");
-                        }
-
-                        @Override
-                        public void onReCalculateRoute(int i) {
-                            Log.e(TAG, "onReCalculateRoute() called with: i = [" + i + "]");
-                        }
-
-                        @Override
-                        public void onExitPage(int i) {
-                            Log.e(TAG, "onExitPage() called with: i = [" + i + "]");
-                        }
-
-                        @Override
-                        public void onStrategyChanged(int i) {
-                            Log.e(TAG, "onStrategyChanged() called with: i = [" + i + "]");
-                        }
-
-                        @Override
-                        public View getCustomNaviBottomView() {
-                            return null;
-                        }
-
-                        @Override
-                        public View getCustomNaviView() {
-                            return null;
-                        }
-
-                        @Override
-                        public void onArrivedWayPoint(int i) {
-                            Log.e(TAG, "onArrivedWayPoint() called with: i = [" + i + "]");
-                        }
-                    });
-                } else {
-                    AndroidUtils.showUnknownErrorToast();
-                }
+                });
             }
-
-            @Override
-            public void onWalkRouteSearched(WalkRouteResult result, int rCode) {
-            }
-
-            @Override
-            public void onRideRouteSearched(RideRouteResult result, int rCode) {
-            }
-        });
-        routeSearch.calculateDriveRouteAsyn(query);
+        }).start();
     }
 }

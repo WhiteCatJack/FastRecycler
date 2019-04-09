@@ -45,6 +45,7 @@
             android:name="com.amap.api.navi.AmapRouteActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:theme="@android:style/Theme.NoTitleBar" />
+        <activity android:name=".RouteNaviActivity" />
     </application>
 
 </manifest>

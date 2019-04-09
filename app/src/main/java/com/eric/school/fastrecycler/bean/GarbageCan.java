@@ -14,6 +14,7 @@ public class GarbageCan extends BmobObject {
     private int number;
     private double longitude;
     private double latitude;
+    private double maxVolume;
 
     public String getAreaCode() {
         return areaCode;
@@ -53,5 +54,13 @@ public class GarbageCan extends BmobObject {
 
     public void setLatitude(double latitude) {
         this.latitude = latitude;
+    }
+
+    public double getMaxVolume() {
+        return maxVolume;
+    }
+
+    public void setMaxVolume(double maxVolume) {
+        this.maxVolume = maxVolume;
     }
 }
