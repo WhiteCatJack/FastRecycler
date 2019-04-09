@@ -22,14 +22,26 @@ import com.amap.api.maps.model.LatLng;
 import com.amap.api.maps.model.Marker;
 import com.amap.api.maps.model.MarkerOptions;
 import com.amap.api.maps.model.MyLocationStyle;
+import com.amap.api.maps.model.Poi;
+import com.amap.api.navi.AmapNaviPage;
+import com.amap.api.navi.AmapNaviParams;
+import com.amap.api.navi.AmapNaviType;
+import com.amap.api.navi.INaviInfoCallback;
+import com.amap.api.navi.model.AMapNaviLocation;
 import com.amap.api.services.core.LatLonPoint;
+import com.amap.api.services.route.BusRouteResult;
+import com.amap.api.services.route.DrivePath;
+import com.amap.api.services.route.DriveRouteResult;
+import com.amap.api.services.route.RideRouteResult;
 import com.amap.api.services.route.RouteSearch;
+import com.amap.api.services.route.WalkRouteResult;
 import com.eric.school.fastrecycler.base.BaseActivity;
-import com.eric.school.fastrecycler.bean.FRUser;
 import com.eric.school.fastrecycler.bean.GarbageCan;
 import com.eric.school.fastrecycler.bean.RecyclerPlace;
 import com.eric.school.fastrecycler.user.UserEngine;
+import com.eric.school.fastrecycler.util.AMapUtil;
 import com.eric.school.fastrecycler.util.AndroidUtils;
+import com.eric.school.fastrecycler.util.overlay.DrivingRouteOverlay;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,11 +49,11 @@ import java.util.List;
 import cn.bmob.v3.BmobQuery;
 import cn.bmob.v3.exception.BmobException;
 import cn.bmob.v3.listener.FindListener;
-import cn.bmob.v3.listener.SaveListener;
 
 public class MapActivity extends BaseActivity {
 
     private static final int REQUEST_LOCATION_PERMISSION_CODE = 0x01;
+    private static final String TAG = "MapActivity";
 
     private MapView mMapView;
 
@@ -199,6 +211,17 @@ public class MapActivity extends BaseActivity {
         markerOptionsList.add(convertToMarkerOptions(recyclerPlace));
         this.mMarkerOptionsList = markerOptionsList;
         mAMap.addMarkers(markerOptionsList, true);
+
+        List<LatLonPoint> list = new ArrayList<>();
+        list.add(new LatLonPoint(recyclerPlace.getLatitude(), recyclerPlace.getLongitude()));
+        list.add(new LatLonPoint(garbageCanList.get(6).getLatitude(), garbageCanList.get(6).getLongitude()));
+        list.add(new LatLonPoint(garbageCanList.get(9).getLatitude(), garbageCanList.get(9).getLongitude()));
+        list.add(new LatLonPoint(garbageCanList.get(7).getLatitude(), garbageCanList.get(7).getLongitude()));
+        list.add(new LatLonPoint(garbageCanList.get(11).getLatitude(), garbageCanList.get(11).getLongitude()));
+        list.add(new LatLonPoint(garbageCanList.get(13).getLatitude(), garbageCanList.get(13).getLongitude()));
+        list.add(new LatLonPoint(garbageCanList.get(15).getLatitude(), garbageCanList.get(15).getLongitude()));
+        list.add(new LatLonPoint(recyclerPlace.getLatitude(), recyclerPlace.getLongitude()));
+        getRoute(this, list);
     }
 
     public void getGarbageCansLocations() {
@@ -251,25 +274,137 @@ public class MapActivity extends BaseActivity {
                 .icon(BitmapDescriptorFactory.fromView(markerView));
     }
 
-    public void getRoute(Context context, List<LatLonPoint> checkPoints) {
+    public void getRoute(final Context context, List<LatLonPoint> checkPoints) {
         if (checkPoints == null || checkPoints.size() < 2) {
             return;
         }
-        LatLonPoint start = null, end = null;
-        List<LatLonPoint> passedByPoints = new ArrayList<>();
+        LatLonPoint startLatLon = null, endLatLon = null;
+        final List<LatLonPoint> passedByPoints = new ArrayList<>();
         for (int i = 0; i < checkPoints.size(); i++) {
             LatLonPoint point = checkPoints.get(i);
             if (i == 0) {
-                start = point;
+                startLatLon = point;
             } else if (i == checkPoints.size() - 1) {
-                end = point;
+                endLatLon = point;
             } else {
                 passedByPoints.add(point);
             }
         }
-        RouteSearch.FromAndTo fromAndTo = new RouteSearch.FromAndTo(start, end);
+        RouteSearch.FromAndTo fromAndTo = new RouteSearch.FromAndTo(startLatLon, endLatLon);
         // 第一个参数表示路径规划的起点和终点，第二个参数表示驾车模式，第三个参数表示途经点，第四个参数表示避让区域，第五个参数表示避让道路
-        RouteSearch.DriveRouteQuery query = new RouteSearch.DriveRouteQuery(fromAndTo, RouteSearch.DRIVING_SINGLE_DEFAULT, passedByPoints,
-                null, "");
+        RouteSearch.DriveRouteQuery query = new RouteSearch.DriveRouteQuery(
+                fromAndTo, RouteSearch.DRIVING_SINGLE_SHORTEST, passedByPoints, null, "");
+        RouteSearch routeSearch = new RouteSearch(context);
+        final LatLonPoint finalStartLatLon = startLatLon;
+        final LatLonPoint finalEndLatLon = endLatLon;
+        routeSearch.setRouteSearchListener(new RouteSearch.OnRouteSearchListener() {
+            @Override
+            public void onBusRouteSearched(BusRouteResult result, int rCode) {
+            }
+
+            @Override
+            public void onDriveRouteSearched(DriveRouteResult result, int rCode) {
+                if (rCode == 1000 && result != null && result.getPaths() != null
+                        && result.getPaths().size() > 0) {
+                    DrivePath drivePath = result.getPaths().get(0);
+                    mAMap.clear();// 清理地图上的所有覆盖物
+                    DrivingRouteOverlay drivingRouteOverlay = new DrivingRouteOverlay(
+                            context, mAMap, drivePath, result.getStartPos(),
+                            result.getTargetPos(), passedByPoints);
+                    drivingRouteOverlay.removeFromMap();
+                    drivingRouteOverlay.addToMap();
+                    drivingRouteOverlay.zoomToSpan();
+
+                    Poi start = AMapUtil.convertToPoi("下一位置", AMapUtil.convertToLatLng(finalStartLatLon));
+                    Poi end = AMapUtil.convertToPoi("下一位置", AMapUtil.convertToLatLng(finalEndLatLon));
+                    List<Poi> wayList = new ArrayList<>();
+                    for (LatLonPoint latLonPoint : passedByPoints) {
+                        wayList.add(AMapUtil.convertToPoi("下一位置", AMapUtil.convertToLatLng(latLonPoint)));
+                    }
+                    AmapNaviPage.getInstance().showRouteActivity(context, new AmapNaviParams(start, wayList, end, AmapNaviType.DRIVER), new INaviInfoCallback() {
+                        @Override
+                        public void onInitNaviFailure() {
+                            Log.e(TAG, "onInitNaviFailure() called");
+                        }
+
+                        @Override
+                        public void onGetNavigationText(String s) {
+                            Log.e(TAG, "onGetNavigationText() called with: s = [" + s + "]");
+                        }
+
+                        @Override
+                        public void onLocationChange(AMapNaviLocation aMapNaviLocation) {
+                            Log.e(TAG, "onLocationChange() called with: aMapNaviLocation = [" + aMapNaviLocation + "]");
+                        }
+
+                        @Override
+                        public void onArriveDestination(boolean b) {
+                            Log.e(TAG, "onArriveDestination() called with: b = [" + b + "]");
+                        }
+
+                        @Override
+                        public void onStartNavi(int i) {
+                            Log.e(TAG, "onStartNavi() called with: i = [" + i + "]");
+                        }
+
+                        @Override
+                        public void onCalculateRouteSuccess(int[] ints) {
+                            Log.e(TAG, "onCalculateRouteSuccess() called with: ints = [" + ints + "]");
+                        }
+
+                        @Override
+                        public void onCalculateRouteFailure(int i) {
+                            Log.e(TAG, "onCalculateRouteFailure() called with: i = [" + i + "]");
+                        }
+
+                        @Override
+                        public void onStopSpeaking() {
+                            Log.e(TAG, "onStopSpeaking() called");
+                        }
+
+                        @Override
+                        public void onReCalculateRoute(int i) {
+                            Log.e(TAG, "onReCalculateRoute() called with: i = [" + i + "]");
+                        }
+
+                        @Override
+                        public void onExitPage(int i) {
+                            Log.e(TAG, "onExitPage() called with: i = [" + i + "]");
+                        }
+
+                        @Override
+                        public void onStrategyChanged(int i) {
+                            Log.e(TAG, "onStrategyChanged() called with: i = [" + i + "]");
+                        }
+
+                        @Override
+                        public View getCustomNaviBottomView() {
+                            return null;
+                        }
+
+                        @Override
+                        public View getCustomNaviView() {
+                            return null;
+                        }
+
+                        @Override
+                        public void onArrivedWayPoint(int i) {
+                            Log.e(TAG, "onArrivedWayPoint() called with: i = [" + i + "]");
+                        }
+                    });
+                } else {
+                    AndroidUtils.showUnknownErrorToast();
+                }
+            }
+
+            @Override
+            public void onWalkRouteSearched(WalkRouteResult result, int rCode) {
+            }
+
+            @Override
+            public void onRideRouteSearched(RideRouteResult result, int rCode) {
+            }
+        });
+        routeSearch.calculateDriveRouteAsyn(query);
     }
 }
