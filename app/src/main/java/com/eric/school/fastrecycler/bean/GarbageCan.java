@@ -1,4 +1,4 @@
-package com.eric.school.fastrecycler;
+package com.eric.school.fastrecycler.bean;
 
 import cn.bmob.v3.BmobObject;
 
@@ -9,44 +9,26 @@ import cn.bmob.v3.BmobObject;
  * createAt 2019/3/24 0024 17:05
  */
 public class GarbageCan extends BmobObject {
-    private int province;
-    private int city;
-    private int district;
-    private int region;
+    private String areaCode;
+    private String blockCode;
     private int number;
     private double longitude;
     private double latitude;
 
-    public int getProvince() {
-        return province;
+    public String getAreaCode() {
+        return areaCode;
     }
 
-    public void setProvince(int province) {
-        this.province = province;
+    public void setAreaCode(String areaCode) {
+        this.areaCode = areaCode;
     }
 
-    public int getCity() {
-        return city;
+    public String getBlockCode() {
+        return blockCode;
     }
 
-    public void setCity(int city) {
-        this.city = city;
-    }
-
-    public int getDistrict() {
-        return district;
-    }
-
-    public void setDistrict(int district) {
-        this.district = district;
-    }
-
-    public int getRegion() {
-        return region;
-    }
-
-    public void setRegion(int region) {
-        this.region = region;
+    public void setBlockCode(String blockCode) {
+        this.blockCode = blockCode;
     }
 
     public int getNumber() {

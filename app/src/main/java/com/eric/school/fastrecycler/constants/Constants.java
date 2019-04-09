@@ -1,4 +1,4 @@
-package com.eric.school.fastrecycler;
+package com.eric.school.fastrecycler.constants;
 
 /**
  * Description.

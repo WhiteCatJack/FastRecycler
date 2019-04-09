@@ -5,15 +5,15 @@ android {
         config {
             keyAlias 'Release Key'
             keyPassword 'Weizekun1997'
-            storeFile file('T:/Android/KeyStore/Fast Recycler/Fast Recycler keyStore.jks')
+            storeFile file('T:/Android/KeyStore/Fast RecyclerPlace/Fast RecyclerPlace keyStore.jks')
             storePassword 'Weizekun1997'
         }
     }
-    compileSdkVersion 27
+    compileSdkVersion 28
     defaultConfig {
         applicationId "com.eric.school.fastrecycler"
         minSdkVersion 21
-        targetSdkVersion 27
+        targetSdkVersion 28
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -37,6 +37,7 @@ dependencies {
     //noinspection GradleCompatible
     implementation 'com.android.support:appcompat-v7:27.1.1'
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
+    implementation 'com.android.support:cardview-v7:28.0.0'
 
     // 高德
     implementation 'com.amap.api:3dmap:latest.integration'
@@ -50,6 +51,9 @@ dependencies {
     implementation 'com.squareup.okio:okio:2.1.0'
     implementation 'com.google.code.gson:gson:2.8.5'
     implementation 'com.squareup.okhttp3:okhttp:3.12.0'
+
+    // Toast
+    implementation 'com.github.GrenderG:Toasty:1.4.1'
 
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'

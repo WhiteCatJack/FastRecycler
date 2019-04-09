@@ -1,12 +1,14 @@
 package com.eric.school.fastrecycler;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
 
 import com.amap.api.location.AMapLocation;
 import com.amap.api.location.AMapLocationClient;
@@ -15,27 +17,43 @@ import com.amap.api.location.AMapLocationListener;
 import com.amap.api.maps.AMap;
 import com.amap.api.maps.LocationSource;
 import com.amap.api.maps.MapView;
+import com.amap.api.maps.model.BitmapDescriptorFactory;
+import com.amap.api.maps.model.LatLng;
 import com.amap.api.maps.model.Marker;
 import com.amap.api.maps.model.MarkerOptions;
 import com.amap.api.maps.model.MyLocationStyle;
+import com.amap.api.services.core.LatLonPoint;
+import com.amap.api.services.route.RouteSearch;
+import com.eric.school.fastrecycler.base.BaseActivity;
+import com.eric.school.fastrecycler.bean.FRUser;
+import com.eric.school.fastrecycler.bean.GarbageCan;
+import com.eric.school.fastrecycler.bean.RecyclerPlace;
+import com.eric.school.fastrecycler.user.UserEngine;
+import com.eric.school.fastrecycler.util.AndroidUtils;
 
 import java.util.ArrayList;
+import java.util.List;
 
-public class MapActivity extends AppCompatActivity implements IMapContract.View {
+import cn.bmob.v3.BmobQuery;
+import cn.bmob.v3.exception.BmobException;
+import cn.bmob.v3.listener.FindListener;
+import cn.bmob.v3.listener.SaveListener;
+
+public class MapActivity extends BaseActivity {
 
     private static final int REQUEST_LOCATION_PERMISSION_CODE = 0x01;
-
-    private IMapContract.GarbageCanPresenter mGarbageCanPresenter;
 
     private MapView mMapView;
 
     private AMapLocationClient mLocationClient;
     private AMap mAMap;
+    private List<GarbageCan> mGarbageCanList;
+    private RecyclerPlace mRecyclerPlace;
+    private ArrayList<MarkerOptions> mMarkerOptionsList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mGarbageCanPresenter = new MapGarbageCanPresenter(this);
         setContentView(R.layout.activity_map);
 
         mMapView = findViewById(R.id.mv_map);
@@ -43,7 +61,11 @@ public class MapActivity extends AppCompatActivity implements IMapContract.View 
 
         checkPermission();
         initAMap();
-        mGarbageCanPresenter.getGarbageCansLocations();
+        if (UserEngine.getCurrentUser() != null) {
+            getGarbageCansLocations();
+        } else {
+            AndroidUtils.showUnknownErrorToast();
+        }
     }
 
     /**
@@ -75,7 +97,7 @@ public class MapActivity extends AppCompatActivity implements IMapContract.View 
     private void initAMap() {
         mAMap = mMapView.getMap();
 
-        mAMap.setMyLocationStyle(new MyLocationStyle().myLocationType(MyLocationStyle.LOCATION_TYPE_LOCATION_ROTATE));
+        mAMap.setMyLocationStyle(new MyLocationStyle().myLocationType(MyLocationStyle.LOCATION_TYPE_LOCATE));
         mAMap.setLocationSource(new LocationSource() {
             private OnLocationChangedListener mListener;
 
@@ -122,10 +144,10 @@ public class MapActivity extends AppCompatActivity implements IMapContract.View 
         mAMap.setOnMarkerClickListener(new AMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
-                /*
-                    get info from marker
-                 */
-                return false;
+                int index = mMarkerOptionsList.indexOf(marker.getOptions());
+                GarbageCan garbageCan = mGarbageCanList.get(index);
+                AndroidUtils.showToast(garbageCan.getObjectId());
+                return true;
             }
         });
     }
@@ -169,8 +191,85 @@ public class MapActivity extends AppCompatActivity implements IMapContract.View 
         super.onDestroy();
     }
 
-    @Override
-    public void showGarbageCans(ArrayList<MarkerOptions> markerOptionsList) {
+    public void showMarkers(List<GarbageCan> garbageCanList, RecyclerPlace recyclerPlace) {
+        ArrayList<MarkerOptions> markerOptionsList = new ArrayList<>();
+        for (GarbageCan can : garbageCanList) {
+            markerOptionsList.add(convertToMarkerOptions(can));
+        }
+        markerOptionsList.add(convertToMarkerOptions(recyclerPlace));
+        this.mMarkerOptionsList = markerOptionsList;
         mAMap.addMarkers(markerOptionsList, true);
+    }
+
+    public void getGarbageCansLocations() {
+        BmobQuery<RecyclerPlace> recyclerPlaceBmobQuery = new BmobQuery<>();
+        recyclerPlaceBmobQuery.addWhereEqualTo("recycler", UserEngine.getCurrentUser().getObjectId());
+        recyclerPlaceBmobQuery.findObjects(new FindListener<RecyclerPlace>() {
+            @Override
+            public void done(List<RecyclerPlace> list, BmobException e) {
+                if (e == null && !list.isEmpty()) {
+                    RecyclerPlace recyclerPlace = list.get(0);
+                    BmobQuery<GarbageCan> garbageCanBmobQuery = new BmobQuery<>();
+                    garbageCanBmobQuery.addWhereEqualTo("areaCode", recyclerPlace.getAreaCode());
+                    garbageCanBmobQuery.addWhereEqualTo("blockCode", recyclerPlace.getBlockCode());
+                    garbageCanBmobQuery.findObjects(new FindListener<GarbageCan>() {
+                        @Override
+                        public void done(List<GarbageCan> list, BmobException e) {
+                            if (e == null) {
+                                mGarbageCanList = list;
+
+                                showMarkers(mGarbageCanList, mRecyclerPlace);
+                            } else {
+                            }
+                        }
+                    });
+                    mRecyclerPlace = recyclerPlace;
+                } else {
+                }
+            }
+        });
+    }
+
+    private <T> MarkerOptions convertToMarkerOptions(T data) {
+        int layoutId = 0;
+        double latitude = 0, longitude = 0;
+        if (data instanceof GarbageCan) {
+            layoutId = R.layout.view_garbage_can_marker;
+            latitude = ((GarbageCan) data).getLatitude();
+            longitude = ((GarbageCan) data).getLongitude();
+        } else if (data instanceof RecyclerPlace) {
+            layoutId = R.layout.view_recycler_place_marker;
+            latitude = ((RecyclerPlace) data).getLatitude();
+            longitude = ((RecyclerPlace) data).getLongitude();
+        } else {
+            AndroidUtils.showUnknownErrorToast();
+        }
+        View markerView = LayoutInflater.from(MapActivity.this).inflate(layoutId, mMapView, false);
+        return new MarkerOptions()
+                .position(new LatLng(latitude, longitude))
+                .draggable(false)
+                .icon(BitmapDescriptorFactory.fromView(markerView));
+    }
+
+    public void getRoute(Context context, List<LatLonPoint> checkPoints) {
+        if (checkPoints == null || checkPoints.size() < 2) {
+            return;
+        }
+        LatLonPoint start = null, end = null;
+        List<LatLonPoint> passedByPoints = new ArrayList<>();
+        for (int i = 0; i < checkPoints.size(); i++) {
+            LatLonPoint point = checkPoints.get(i);
+            if (i == 0) {
+                start = point;
+            } else if (i == checkPoints.size() - 1) {
+                end = point;
+            } else {
+                passedByPoints.add(point);
+            }
+        }
+        RouteSearch.FromAndTo fromAndTo = new RouteSearch.FromAndTo(start, end);
+        // 第一个参数表示路径规划的起点和终点，第二个参数表示驾车模式，第三个参数表示途经点，第四个参数表示避让区域，第五个参数表示避让道路
+        RouteSearch.DriveRouteQuery query = new RouteSearch.DriveRouteQuery(fromAndTo, RouteSearch.DRIVING_SINGLE_DEFAULT, passedByPoints,
+                null, "");
     }
 }
