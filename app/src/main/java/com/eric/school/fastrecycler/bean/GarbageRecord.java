@@ -11,7 +11,7 @@ import cn.bmob.v3.datatype.BmobDate;
  */
 public class GarbageRecord extends BmobObject {
     private GarbageCan garbageCan;
-    private BmobDate date;
+    private BmobDate time;
     private double volumeChange;
 
     public GarbageCan getGarbageCan() {
@@ -22,12 +22,12 @@ public class GarbageRecord extends BmobObject {
         this.garbageCan = garbageCan;
     }
 
-    public BmobDate getDate() {
-        return date;
+    public BmobDate getTime() {
+        return time;
     }
 
-    public void setDate(BmobDate date) {
-        this.date = date;
+    public void setTime(BmobDate time) {
+        this.time = time;
     }
 
     public double getVolumeChange() {

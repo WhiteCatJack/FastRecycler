@@ -26,34 +26,33 @@ import com.amap.api.maps.model.LatLng;
 import com.amap.api.maps.model.Marker;
 import com.amap.api.maps.model.MarkerOptions;
 import com.amap.api.maps.model.MyLocationStyle;
-import com.amap.api.navi.AMapNavi;
-import com.amap.api.navi.AMapNaviView;
-import com.amap.api.navi.AmapNaviPage;
-import com.amap.api.navi.AmapNaviParams;
-import com.amap.api.navi.AmapNaviType;
-import com.amap.api.navi.INaviInfoCallback;
-import com.amap.api.navi.enums.NaviType;
-import com.amap.api.navi.model.AMapCalcRouteResult;
-import com.amap.api.navi.model.AMapNaviLocation;
 import com.amap.api.services.core.LatLonPoint;
 import com.eric.school.fastrecycler.base.BaseActivity;
+import com.eric.school.fastrecycler.bean.ClientMailbox;
 import com.eric.school.fastrecycler.bean.GarbageCan;
 import com.eric.school.fastrecycler.bean.GarbageRecord;
 import com.eric.school.fastrecycler.bean.RecyclerPlace;
+import com.eric.school.fastrecycler.bean.ServerMailbox;
 import com.eric.school.fastrecycler.user.UserEngine;
 import com.eric.school.fastrecycler.util.AMapUtil;
 import com.eric.school.fastrecycler.util.AndroidUtils;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import cn.bmob.v3.BmobQuery;
 import cn.bmob.v3.datatype.BmobDate;
 import cn.bmob.v3.exception.BmobException;
 import cn.bmob.v3.listener.FindListener;
 import cn.bmob.v3.listener.SaveListener;
-import es.dmoral.toasty.Toasty;
+import cn.bmob.v3.listener.UpdateListener;
 
 public class MapActivity extends BaseActivity {
 
@@ -83,6 +82,72 @@ public class MapActivity extends BaseActivity {
         } else {
             AndroidUtils.showUnknownErrorToast();
         }
+        findViewById(R.id.fab_get_target_garbage_can_list).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                View layout = LayoutInflater.from(MapActivity.this).inflate(R.layout.dialog_predict_time_input, null, false);
+                final EditText startTimeInput = layout.findViewById(R.id.et_start_time);
+                final EditText endTimeInput = layout.findViewById(R.id.et_end_time);
+                View submitButton = layout.findViewById(R.id.bt_submit);
+                AlertDialog.Builder builder = new AlertDialog.Builder(MapActivity.this);
+                builder.setView(layout);
+                final Dialog dialog = builder.create();
+                submitButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        ClientMailbox mailbox = new ClientMailbox();
+                        mailbox.setUser(UserEngine.getCurrentUser());
+                        mailbox.setStartTime(new BmobDate(getDate(startTimeInput.getText().toString())));
+                        mailbox.setEndTime(new BmobDate(getDate(endTimeInput.getText().toString())));
+                        mailbox.save(new SaveListener<String>() {
+                            @Override
+                            public void done(final String mailId, BmobException e) {
+                                if (e == null) {
+                                    new Thread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            try {
+                                                Thread.sleep(10000);
+
+                                                BmobQuery<ServerMailbox> serverMBQuery = new BmobQuery<>();
+                                                serverMBQuery.addWhereEqualTo("user", UserEngine.getCurrentUser().getObjectId());
+                                                serverMBQuery.addWhereEqualTo("mail", mailId);
+                                                serverMBQuery.addWhereEqualTo("valid", true);
+                                                serverMBQuery.findObjects(new FindListener<ServerMailbox>() {
+                                                    @Override
+                                                    public void done(List<ServerMailbox> list, BmobException e) {
+                                                        dialog.dismiss();
+                                                        if (e == null && list != null && !list.isEmpty()) {
+                                                            ServerMailbox mail = list.get(0);
+                                                            List<String> idList = new ArrayList<>(Arrays.asList(mail.getGarbageCanList().split(",")));
+                                                            getRoute(MapActivity.this, idList);
+                                                            mail.setValid(false);
+                                                            mail.update(new UpdateListener() {
+                                                                @Override
+                                                                public void done(BmobException e) {
+                                                                }
+                                                            });
+                                                        } else {
+                                                            AndroidUtils.showUnknownErrorToast();
+                                                        }
+                                                    }
+                                                });
+                                            } catch (InterruptedException e1) {
+                                                e1.printStackTrace();
+                                            }
+                                        }
+                                    }).start();
+                                } else {
+                                    dialog.dismiss();
+                                    AndroidUtils.showUnknownErrorToast();
+                                }
+                            }
+                        });
+                    }
+                });
+                dialog.show();
+            }
+        });
     }
 
     /**
@@ -178,7 +243,7 @@ public class MapActivity extends BaseActivity {
                     public void onClick(View v) {
                         GarbageRecord garbageRecord = new GarbageRecord();
                         garbageRecord.setGarbageCan(garbageCan);
-                        garbageRecord.setDate(new BmobDate(Calendar.getInstance().getTime()));
+                        garbageRecord.setTime(new BmobDate(Calendar.getInstance().getTime()));
                         garbageRecord.setVolumeChange(Double.valueOf(editText.getText().toString()));
                         garbageRecord.save(new SaveListener<String>() {
                             @Override
@@ -194,6 +259,7 @@ public class MapActivity extends BaseActivity {
                 return true;
             }
         });
+        mAMap.getUiSettings().setZoomControlsEnabled(false);
     }
 
     /**
@@ -243,21 +309,6 @@ public class MapActivity extends BaseActivity {
         markerOptionsList.add(convertToMarkerOptions(recyclerPlace));
         this.mMarkerOptionsList = markerOptionsList;
         mAMap.addMarkers(markerOptionsList, true);
-
-        List<LatLonPoint> list = new ArrayList<>();
-        list.add(new LatLonPoint(recyclerPlace.getLatitude(), recyclerPlace.getLongitude()));
-        list.add(new LatLonPoint(garbageCanList.get(6).getLatitude(), garbageCanList.get(6).getLongitude()));
-        list.add(new LatLonPoint(garbageCanList.get(9).getLatitude(), garbageCanList.get(9).getLongitude()));
-        list.add(new LatLonPoint(garbageCanList.get(7).getLatitude(), garbageCanList.get(7).getLongitude()));
-        list.add(new LatLonPoint(garbageCanList.get(11).getLatitude(), garbageCanList.get(11).getLongitude()));
-        list.add(new LatLonPoint(garbageCanList.get(13).getLatitude(), garbageCanList.get(13).getLongitude()));
-        list.add(new LatLonPoint(garbageCanList.get(15).getLatitude(), garbageCanList.get(15).getLongitude()));
-        list.add(new LatLonPoint(garbageCanList.get(1).getLatitude(), garbageCanList.get(1).getLongitude()));
-        list.add(new LatLonPoint(garbageCanList.get(2).getLatitude(), garbageCanList.get(2).getLongitude()));
-        list.add(new LatLonPoint(garbageCanList.get(3).getLatitude(), garbageCanList.get(3).getLongitude()));
-        list.add(new LatLonPoint(garbageCanList.get(4).getLatitude(), garbageCanList.get(4).getLongitude()));
-        list.add(new LatLonPoint(garbageCanList.get(5).getLatitude(), garbageCanList.get(5).getLongitude()));
-        getRoute(this, list);
     }
 
     public void getGarbageCansLocations() {
@@ -310,26 +361,56 @@ public class MapActivity extends BaseActivity {
                 .icon(BitmapDescriptorFactory.fromView(markerView));
     }
 
-    public void getRoute(final Context context, final List<LatLonPoint> checkPoints) {
-        if (checkPoints == null || checkPoints.size() < 2) {
+    public void getRoute(final Context context, final List<String> garbageCanIdList) {
+        if (garbageCanIdList == null || garbageCanIdList.size() < 2) {
             return;
         }
 
-        new Thread(new Runnable() {
+        BmobQuery<GarbageCan> query = new BmobQuery<>();
+        query.addWhereContainedIn("objectId", garbageCanIdList);
+        query.findObjects(new FindListener<GarbageCan>() {
             @Override
-            public void run() {
-                final ArrayList<LatLonPoint> path = AMapUtil.sortWayPointSeriesShortestPath(context, checkPoints);
-                path.add(new LatLonPoint(mRecyclerPlace.getLatitude(), mRecyclerPlace.getLongitude()));
+            public void done(final List<GarbageCan> list, BmobException e) {
+                if (e == null) {
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            List<LatLonPoint> checkPoints = new ArrayList<>();
+                            checkPoints.add(new LatLonPoint(mRecyclerPlace.getLatitude(), mRecyclerPlace.getLongitude()));
+                            for (GarbageCan can : list) {
+                                checkPoints.add(new LatLonPoint(can.getLatitude(), can.getLongitude()));
+                            }
+                            final ArrayList<LatLonPoint> path = AMapUtil.sortWayPointSeriesShortestPath(context, checkPoints);
+                            path.add(new LatLonPoint(mRecyclerPlace.getLatitude(), mRecyclerPlace.getLongitude()));
 
-                MapActivity.this.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Intent intent = new Intent(MapActivity.this, RouteNaviActivity.class);
-                        intent.putParcelableArrayListExtra("path", path);
-                        startActivity(intent);
-                    }
-                });
+                            MapActivity.this.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Intent intent = new Intent(MapActivity.this, RouteNaviActivity.class);
+                                    intent.putParcelableArrayListExtra("path", path);
+                                    startActivity(intent);
+                                }
+                            });
+                        }
+                    }).start();
+                } else {
+                    AndroidUtils.showUnknownErrorToast();
+                }
             }
-        }).start();
+        });
+    }
+
+    private Date getDate(String isoTime){
+        String[] str_list = isoTime.replace("-", ":").replace(" ", ":").split(":");
+        int year = Integer.valueOf(str_list[0]);
+        int month = Integer.valueOf(str_list[1]);
+        int day = Integer.valueOf(str_list[2]);
+        int hour = Integer.valueOf(str_list[3]);
+        int minute = Integer.valueOf(str_list[4]);
+        int second = Integer.valueOf(str_list[5]);
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(year, month, day, hour, minute, second);
+        return calendar.getTime();
     }
 }
