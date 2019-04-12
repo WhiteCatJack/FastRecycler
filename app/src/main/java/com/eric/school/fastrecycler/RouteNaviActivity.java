@@ -1,7 +1,12 @@
 package com.eric.school.fastrecycler;
 
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.view.Window;
+import android.widget.EditText;
 
 import com.amap.api.navi.AMapNavi;
 import com.amap.api.navi.AMapNaviListener;
@@ -24,10 +29,16 @@ import com.amap.api.navi.model.NaviInfo;
 import com.amap.api.services.core.LatLonPoint;
 import com.autonavi.tbt.TrafficFacilityInfo;
 import com.eric.school.fastrecycler.base.BaseActivity;
+import com.eric.school.fastrecycler.bean.GarbageRecord;
 import com.eric.school.fastrecycler.util.AMapUtil;
 import com.eric.school.fastrecycler.util.AndroidUtils;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+
+import cn.bmob.v3.datatype.BmobDate;
+import cn.bmob.v3.exception.BmobException;
+import cn.bmob.v3.listener.SaveListener;
 
 /**
  * Description.
@@ -128,17 +139,42 @@ public class RouteNaviActivity extends BaseActivity implements AMapNaviListener,
 
     @Override
     public void onArriveDestination() {
-        nowStart++;
-        nowEnd++;
-        if (nowEnd > path.size() - 1) {
-            AndroidUtils.showToast("完成导航！");
-            onNaviCancel();
-            return;
-        }
-        mAMapNavi.calculateRideRoute(
-                AMapUtil.convertToNaviLatLng(path.get(nowStart)),
-                AMapUtil.convertToNaviLatLng(path.get(nowEnd))
-        );
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setCancelable(false);
+        View layout = LayoutInflater.from(this).inflate(R.layout.dialog_input_recycled_garbage_volume, null);
+        final EditText editText = layout.findViewById(R.id.et_recycled_volume);
+        View submitButton = layout.findViewById(R.id.bt_submit);
+        builder.setView(layout);
+        final Dialog dialog = builder.create();
+        submitButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                GarbageRecord garbageRecord = new GarbageRecord();
+//                garbageRecord.setGarbageCan(garbageCan);
+                garbageRecord.setTime(new BmobDate(Calendar.getInstance().getTime()));
+                garbageRecord.setVolumeChange(Double.valueOf(editText.getText().toString()));
+                garbageRecord.save(new SaveListener<String>() {
+                    @Override
+                    public void done(String s, BmobException e) {
+                        AndroidUtils.showToast("你成功上传了回收记录！");
+                        dialog.dismiss();
+
+                        nowStart++;
+                        nowEnd++;
+                        if (nowEnd > path.size() - 1) {
+                            AndroidUtils.showToast("完成导航！");
+                            onNaviCancel();
+                            return;
+                        }
+                        mAMapNavi.calculateRideRoute(
+                                AMapUtil.convertToNaviLatLng(path.get(nowStart)),
+                                AMapUtil.convertToNaviLatLng(path.get(nowEnd))
+                        );
+                    }
+                });
+            }
+        });
+        dialog.show();
     }
 
     @Override

@@ -107,29 +107,33 @@ public class MapActivity extends BaseActivity {
                                         @Override
                                         public void run() {
                                             try {
-                                                Thread.sleep(10000);
+                                                Thread.sleep(15000);
 
                                                 BmobQuery<ServerMailbox> serverMBQuery = new BmobQuery<>();
                                                 serverMBQuery.addWhereEqualTo("user", UserEngine.getCurrentUser().getObjectId());
                                                 serverMBQuery.addWhereEqualTo("mail", mailId);
                                                 serverMBQuery.addWhereEqualTo("valid", true);
+                                                serverMBQuery.order("-createdAt");
                                                 serverMBQuery.findObjects(new FindListener<ServerMailbox>() {
                                                     @Override
-                                                    public void done(List<ServerMailbox> list, BmobException e) {
+                                                    public void done(final List<ServerMailbox> list, BmobException e) {
                                                         dialog.dismiss();
                                                         if (e == null && list != null && !list.isEmpty()) {
                                                             ServerMailbox mail = list.get(0);
-                                                            List<String> idList = new ArrayList<>(Arrays.asList(mail.getGarbageCanList().split(",")));
-                                                            getRoute(MapActivity.this, idList);
-                                                            mail.setValid(false);
-                                                            mail.update(new UpdateListener() {
+                                                            ServerMailbox m = new ServerMailbox();
+                                                            m.setObjectId(mailId);
+                                                            m.setValid(false);
+                                                            m.update(new UpdateListener() {
                                                                 @Override
                                                                 public void done(BmobException e) {
                                                                 }
                                                             });
+                                                            List<String> idList = new ArrayList<>(Arrays.asList(mail.getGarbageCanList().split(",")));
+                                                            getRoute(MapActivity.this, idList);
                                                         } else {
                                                             AndroidUtils.showUnknownErrorToast();
                                                         }
+
                                                     }
                                                 });
                                             } catch (InterruptedException e1) {

@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.Random;
 
 /**
- * Description.
+ * 遗传算法TSP.
  *
  * @author 泽乾
  * createAt 2019/4/9 0009 20:20

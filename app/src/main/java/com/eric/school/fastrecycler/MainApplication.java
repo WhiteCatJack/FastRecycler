@@ -34,7 +34,9 @@ public class MainApplication extends Application {
             @Override
             public void done(FRUser userObject, BmobException e) {
                 if (e == null) {
-                    Log.d(TAG, "done() called with: userObject = [" + userObject + "], e = [" + e + "]");
+                    Log.d(TAG, "done() called with: userObject = [" + userObject + "]");
+                } else {
+                    Log.d(TAG, "done() called with: e = [" + e + "]");
                 }
             }
         });

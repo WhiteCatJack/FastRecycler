@@ -15,7 +15,7 @@
         android:id="@+id/et_start_time"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="2019-04-12 13:00:00"
+        android:text="2019-04-19 13:00:00"
         android:textSize="17dp" />
 
     <TextView
@@ -28,7 +28,7 @@
         android:id="@+id/et_end_time"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="2019-04-12 13:29:00"
+        android:text="2019-04-19 13:29:00"
         android:textSize="17dp" />
 
 
