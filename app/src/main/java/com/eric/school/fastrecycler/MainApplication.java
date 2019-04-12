@@ -3,8 +3,8 @@ package com.eric.school.fastrecycler;
 import android.app.Application;
 import android.util.Log;
 
-import com.eric.school.fastrecycler.bean.FRUser;
-import com.eric.school.fastrecycler.constants.Constants;
+import com.eric.school.fastrecycler.tools.bean.FRUser;
+import com.eric.school.fastrecycler.tools.constant.Constants;
 
 import cn.bmob.v3.Bmob;
 import cn.bmob.v3.BmobConfig;
@@ -23,23 +23,6 @@ public class MainApplication extends Application {
         super.onCreate();
 
         initBmob();
-        login();
-    }
-
-    private void login() {
-        FRUser user = new FRUser();
-        user.setUsername("123");
-        user.setPassword("123");
-        user.login(new SaveListener<FRUser>() {
-            @Override
-            public void done(FRUser userObject, BmobException e) {
-                if (e == null) {
-                    Log.d(TAG, "done() called with: userObject = [" + userObject + "]");
-                } else {
-                    Log.d(TAG, "done() called with: e = [" + e + "]");
-                }
-            }
-        });
     }
 
     private void initBmob() {

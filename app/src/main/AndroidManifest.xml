@@ -34,7 +34,7 @@
             android:name="cn.bmob.v3.util.BmobContentProvider"
             android:authorities="com.eric.school.fastrecycler.BmobContentProvider" />
 
-        <activity android:name=".MapActivity">
+        <activity android:name=".map.MapActivity">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <action android:name="android.intent.action.MAIN" />
@@ -46,7 +46,7 @@
             android:name="com.amap.api.navi.AmapRouteActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:theme="@android:style/Theme.NoTitleBar" />
-        <activity android:name=".RouteNaviActivity" />
+        <activity android:name=".map.navi.RouteNaviActivity" />
     </application>
 
 </manifest>

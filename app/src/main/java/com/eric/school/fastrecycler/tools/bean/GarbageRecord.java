@@ -1,4 +1,4 @@
-package com.eric.school.fastrecycler.bean;
+package com.eric.school.fastrecycler.tools.bean;
 
 import cn.bmob.v3.BmobObject;
 import cn.bmob.v3.datatype.BmobDate;

@@ -2,4 +2,9 @@
     <string name="app_name">Fast Recycler</string>
 
     <string name="unknown_error">Unknown error!</string>
+    <string name="warning_not_sign_in">Not signed in! Please sign in first.</string>
+    <string name="button_sign_in">Sign in</string>
+    <string name="hint_sign_username">Please input username here.</string>
+    <string name="hint_sign_password">Please input password here.</string>
+    <string name="button_sign_out">Sign out</string>
 </resources>

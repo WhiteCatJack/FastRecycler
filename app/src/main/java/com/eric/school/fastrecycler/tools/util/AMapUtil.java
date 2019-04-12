@@ -1,7 +1,6 @@
-package com.eric.school.fastrecycler.util;
+package com.eric.school.fastrecycler.tools.util;
 
 import android.content.Context;
-import android.graphics.Point;
 import android.support.annotation.WorkerThread;
 
 import com.amap.api.maps.model.LatLng;

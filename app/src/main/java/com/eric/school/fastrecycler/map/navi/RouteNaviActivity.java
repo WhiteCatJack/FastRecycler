@@ -1,4 +1,4 @@
-package com.eric.school.fastrecycler;
+package com.eric.school.fastrecycler.map.navi;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -28,10 +28,11 @@ import com.amap.api.navi.model.AimLessModeStat;
 import com.amap.api.navi.model.NaviInfo;
 import com.amap.api.services.core.LatLonPoint;
 import com.autonavi.tbt.TrafficFacilityInfo;
-import com.eric.school.fastrecycler.base.BaseActivity;
-import com.eric.school.fastrecycler.bean.GarbageRecord;
-import com.eric.school.fastrecycler.util.AMapUtil;
-import com.eric.school.fastrecycler.util.AndroidUtils;
+import com.eric.school.fastrecycler.R;
+import com.eric.school.fastrecycler.tools.base.BaseActivity;
+import com.eric.school.fastrecycler.tools.bean.GarbageRecord;
+import com.eric.school.fastrecycler.tools.util.AMapUtil;
+import com.eric.school.fastrecycler.tools.util.AndroidUtils;
 
 import java.util.ArrayList;
 import java.util.Calendar;

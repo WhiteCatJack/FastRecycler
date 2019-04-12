@@ -1,4 +1,4 @@
-package com.eric.school.fastrecycler.util;
+package com.eric.school.fastrecycler.tools.util;
 
 import java.util.Arrays;
 import java.util.Random;

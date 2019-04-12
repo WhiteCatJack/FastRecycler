@@ -1,4 +1,4 @@
-package com.eric.school.fastrecycler;
+package com.eric.school.fastrecycler.map;
 
 import android.Manifest;
 import android.app.AlertDialog;
@@ -27,25 +27,23 @@ import com.amap.api.maps.model.Marker;
 import com.amap.api.maps.model.MarkerOptions;
 import com.amap.api.maps.model.MyLocationStyle;
 import com.amap.api.services.core.LatLonPoint;
-import com.eric.school.fastrecycler.base.BaseActivity;
-import com.eric.school.fastrecycler.bean.ClientMailbox;
-import com.eric.school.fastrecycler.bean.GarbageCan;
-import com.eric.school.fastrecycler.bean.GarbageRecord;
-import com.eric.school.fastrecycler.bean.RecyclerPlace;
-import com.eric.school.fastrecycler.bean.ServerMailbox;
-import com.eric.school.fastrecycler.user.UserEngine;
-import com.eric.school.fastrecycler.util.AMapUtil;
-import com.eric.school.fastrecycler.util.AndroidUtils;
-
-import org.json.JSONArray;
-import org.json.JSONException;
+import com.eric.school.fastrecycler.R;
+import com.eric.school.fastrecycler.map.navi.RouteNaviActivity;
+import com.eric.school.fastrecycler.tools.base.BaseActivity;
+import com.eric.school.fastrecycler.tools.bean.ClientMailbox;
+import com.eric.school.fastrecycler.tools.bean.GarbageCan;
+import com.eric.school.fastrecycler.tools.bean.GarbageRecord;
+import com.eric.school.fastrecycler.tools.bean.RecyclerPlace;
+import com.eric.school.fastrecycler.tools.bean.ServerMailbox;
+import com.eric.school.fastrecycler.tools.user.UserEngine;
+import com.eric.school.fastrecycler.tools.util.AMapUtil;
+import com.eric.school.fastrecycler.tools.util.AndroidUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 import cn.bmob.v3.BmobQuery;
 import cn.bmob.v3.datatype.BmobDate;
@@ -77,7 +75,7 @@ public class MapActivity extends BaseActivity {
 
         checkPermission();
         initAMap();
-        if (UserEngine.getCurrentUser() != null) {
+        if (UserEngine.getInstance().getCurrentUser() != null) {
             getGarbageCansLocations();
         } else {
             AndroidUtils.showUnknownErrorToast();
@@ -96,7 +94,7 @@ public class MapActivity extends BaseActivity {
                     @Override
                     public void onClick(View v) {
                         ClientMailbox mailbox = new ClientMailbox();
-                        mailbox.setUser(UserEngine.getCurrentUser());
+                        mailbox.setUser(UserEngine.getInstance().getCurrentUser());
                         mailbox.setStartTime(new BmobDate(getDate(startTimeInput.getText().toString())));
                         mailbox.setEndTime(new BmobDate(getDate(endTimeInput.getText().toString())));
                         mailbox.save(new SaveListener<String>() {
@@ -110,7 +108,7 @@ public class MapActivity extends BaseActivity {
                                                 Thread.sleep(15000);
 
                                                 BmobQuery<ServerMailbox> serverMBQuery = new BmobQuery<>();
-                                                serverMBQuery.addWhereEqualTo("user", UserEngine.getCurrentUser().getObjectId());
+                                                serverMBQuery.addWhereEqualTo("user", UserEngine.getInstance().getCurrentUser().getObjectId());
                                                 serverMBQuery.addWhereEqualTo("mail", mailId);
                                                 serverMBQuery.addWhereEqualTo("valid", true);
                                                 serverMBQuery.order("-createdAt");
@@ -317,7 +315,7 @@ public class MapActivity extends BaseActivity {
 
     public void getGarbageCansLocations() {
         BmobQuery<RecyclerPlace> recyclerPlaceBmobQuery = new BmobQuery<>();
-        recyclerPlaceBmobQuery.addWhereEqualTo("recycler", UserEngine.getCurrentUser().getObjectId());
+        recyclerPlaceBmobQuery.addWhereEqualTo("recycler", UserEngine.getInstance().getCurrentUser().getObjectId());
         recyclerPlaceBmobQuery.findObjects(new FindListener<RecyclerPlace>() {
             @Override
             public void done(List<RecyclerPlace> list, BmobException e) {
@@ -404,7 +402,7 @@ public class MapActivity extends BaseActivity {
         });
     }
 
-    private Date getDate(String isoTime){
+    private Date getDate(String isoTime) {
         String[] str_list = isoTime.replace("-", ":").replace(" ", ":").split(":");
         int year = Integer.valueOf(str_list[0]);
         int month = Integer.valueOf(str_list[1]);
