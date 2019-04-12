@@ -26,20 +26,22 @@ public class BaseActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mContext = this;
-        checkLogin();
+        checkIfLogin();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        checkLogin();
+        checkIfLogin();
     }
 
-    private void checkLogin() {
-        if (needCheckLogin() && UserEngine.getInstance().isSignedIn(this)) {
+    protected boolean checkIfLogin() {
+        if (needCheckLogin() && UserEngine.getInstance().isSignedIn()) {
             AndroidUtils.showWarning(AndroidUtils.getApplicationContext().getResources().getString(R.string.warning_not_sign_in));
             Navigation.goToSignInActivity(this);
+            return false;
         }
+        return true;
     }
 
     @Override
@@ -76,11 +78,30 @@ public class BaseActivity extends AppCompatActivity {
 
     protected void showLoadingDialog() {
         checkAndInitLoadingDialog();
-        progressDialog.show();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                progressDialog.show();
+            }
+        });
     }
 
     protected void dismissLoadingDialog() {
         checkAndInitLoadingDialog();
-        progressDialog.dismiss();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                progressDialog.dismiss();
+            }
+        });
+    }
+
+    protected void showError(final String message) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                AndroidUtils.showError(message);
+            }
+        });
     }
 }

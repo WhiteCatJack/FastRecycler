@@ -9,12 +9,14 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
 import android.util.Base64;
+import android.view.View;
 import android.widget.Toast;
 
 import com.eric.school.fastrecycler.R;
@@ -33,6 +35,24 @@ import es.dmoral.toasty.Toasty;
 public class AndroidUtils {
     public static Context getApplicationContext() {
         return Bmob.getApplicationContext();
+    }
+
+    public static Bitmap loadBitmapFromView(View v) {
+        if (v == null) {
+            return null;
+        }
+        Bitmap screenshot;
+        screenshot = Bitmap.createBitmap(v.getWidth(), v.getHeight(), Bitmap.Config.ARGB_4444);
+        Canvas canvas = new Canvas(screenshot);
+        // 我们在用滑动View获得它的Bitmap时候，获得的是整个View的区域（包括隐藏的），如果想得到当前区域，需要重新定位到当前可显示的区域
+        canvas.translate(-v.getScrollX(), -v.getScrollY());
+        // 将 view 画到画布上
+        v.draw(canvas);
+        return screenshot;
+    }
+
+    public static String getUnknownErrorString(){
+        return getString(R.string.unknown_error);
     }
 
     private static String getString(@StringRes int id) {

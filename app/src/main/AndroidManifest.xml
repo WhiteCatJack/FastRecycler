@@ -34,7 +34,9 @@
             android:name="cn.bmob.v3.util.BmobContentProvider"
             android:authorities="com.eric.school.fastrecycler.BmobContentProvider" />
 
-        <activity android:name=".map.MapActivity">
+        <activity
+            android:name=".map.MapActivity"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <action android:name="android.intent.action.MAIN" />

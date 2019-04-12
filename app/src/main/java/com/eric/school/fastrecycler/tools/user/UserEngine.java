@@ -45,7 +45,7 @@ public class UserEngine implements UserInterface {
     }
 
     @Override
-    public boolean isSignedIn(@NonNull Context context) {
+    public boolean isSignedIn() {
         return getCurrentUser() != null;
     }
 

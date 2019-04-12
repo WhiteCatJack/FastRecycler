@@ -17,9 +17,8 @@ interface UserInterface {
 
     /**
      * 检查登录态
-     * 如果登陆态不正确，直接跳转至登录页面
      */
-    boolean isSignedIn(@NonNull Context context);
+    boolean isSignedIn();
 
     /**
      * 获取当前登录用户

@@ -35,9 +35,12 @@ import com.eric.school.fastrecycler.tools.bean.GarbageCan;
 import com.eric.school.fastrecycler.tools.bean.GarbageRecord;
 import com.eric.school.fastrecycler.tools.bean.RecyclerPlace;
 import com.eric.school.fastrecycler.tools.bean.ServerMailbox;
+import com.eric.school.fastrecycler.tools.datasource.garbagecan.GarbageCanDataSource;
 import com.eric.school.fastrecycler.tools.user.UserEngine;
 import com.eric.school.fastrecycler.tools.util.AMapUtil;
 import com.eric.school.fastrecycler.tools.util.AndroidUtils;
+import com.eric.school.fastrecycler.tools.util.BmobUtils;
+import com.eric.school.fastrecycler.tools.util.Navigation;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -75,10 +78,8 @@ public class MapActivity extends BaseActivity {
 
         checkPermission();
         initAMap();
-        if (UserEngine.getInstance().getCurrentUser() != null) {
+        if (checkIfLogin()) {
             getGarbageCansLocations();
-        } else {
-            AndroidUtils.showUnknownErrorToast();
         }
         findViewById(R.id.fab_get_target_garbage_can_list).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -158,21 +159,6 @@ public class MapActivity extends BaseActivity {
     private void checkPermission() {
         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION}, REQUEST_LOCATION_PERMISSION_CODE);
-    }
-
-    /**
-     * 权限回调之后开始定位
-     */
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case REQUEST_LOCATION_PERMISSION_CODE: {
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED
-                        && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
-                }
-            }
-        }
     }
 
     /**
@@ -314,30 +300,29 @@ public class MapActivity extends BaseActivity {
     }
 
     public void getGarbageCansLocations() {
-        BmobQuery<RecyclerPlace> recyclerPlaceBmobQuery = new BmobQuery<>();
-        recyclerPlaceBmobQuery.addWhereEqualTo("recycler", UserEngine.getInstance().getCurrentUser().getObjectId());
-        recyclerPlaceBmobQuery.findObjects(new FindListener<RecyclerPlace>() {
+        new Thread(new Runnable() {
             @Override
-            public void done(List<RecyclerPlace> list, BmobException e) {
-                if (e == null && !list.isEmpty()) {
-                    RecyclerPlace recyclerPlace = list.get(0);
-                    BmobQuery<GarbageCan> garbageCanBmobQuery = new BmobQuery<>();
-                    garbageCanBmobQuery.addWhereEqualTo("areaCode", recyclerPlace.getAreaCode());
-                    garbageCanBmobQuery.addWhereEqualTo("blockCode", recyclerPlace.getBlockCode());
-                    garbageCanBmobQuery.findObjects(new FindListener<GarbageCan>() {
-                        @Override
-                        public void done(List<GarbageCan> list, BmobException e) {
-                            if (e == null) {
-                                mGarbageCanList = list;
-
-                                showMarkers(mGarbageCanList, mRecyclerPlace);
-                            } else {
-                            }
-                        }
-                    });
-                    mRecyclerPlace = recyclerPlace;
+            public void run() {
+                final BmobUtils.BmobSyncObject<RecyclerPlace> recyclerPlaceBSO = GarbageCanDataSource.getImpl().getRecyclerPlace();
+                if (recyclerPlaceBSO.isSuccess()) {
+                    mRecyclerPlace = recyclerPlaceBSO.getData();
                 } else {
+                    showError(recyclerPlaceBSO.getException().getMessage());
+                    return;
                 }
+                final BmobUtils.BmobSyncObject<List<GarbageCan>> garbageCanListBSO = GarbageCanDataSource.getImpl().getGarbageCanList(mRecyclerPlace);
+                if (garbageCanListBSO.isSuccess()) {
+                    mGarbageCanList = garbageCanListBSO.getData();
+                } else {
+                    showError(garbageCanListBSO.getException().getMessage());
+                    return;
+                }
+                MapActivity.this.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        showMarkers(mGarbageCanList, mRecyclerPlace);
+                    }
+                });
             }
         });
     }
@@ -360,7 +345,7 @@ public class MapActivity extends BaseActivity {
         return new MarkerOptions()
                 .position(new LatLng(latitude, longitude))
                 .draggable(false)
-                .icon(BitmapDescriptorFactory.fromView(markerView));
+                .icon(BitmapDescriptorFactory.fromBitmap(AndroidUtils.loadBitmapFromView(markerView)));
     }
 
     public void getRoute(final Context context, final List<String> garbageCanIdList) {
