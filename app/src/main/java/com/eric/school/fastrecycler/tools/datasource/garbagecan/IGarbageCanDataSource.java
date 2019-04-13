@@ -6,9 +6,10 @@ import android.support.annotation.WorkerThread;
 
 import com.eric.school.fastrecycler.tools.bean.GarbageCan;
 import com.eric.school.fastrecycler.tools.bean.RecyclerPlace;
-import com.eric.school.fastrecycler.tools.util.BmobUtils;
 
 import java.util.List;
+
+import cn.bmob.v3.exception.BmobException;
 
 /**
  * 垃圾桶数据池.
@@ -18,17 +19,11 @@ import java.util.List;
  */
 interface IGarbageCanDataSource {
 
-    /**
-     * 同步方式调用BmobApi获取回收站数据
-     */
-    @NonNull
+    @Nullable
     @WorkerThread
-    BmobUtils.BmobSyncObject<RecyclerPlace> getRecyclerPlace();
+    RecyclerPlace getRecyclerPlace() throws BmobException;
 
-    /**
-     * 同步方式调用BmobApi获取所有垃圾桶数据
-     */
     @NonNull
     @WorkerThread
-    BmobUtils.BmobSyncObject<List<GarbageCan>> getGarbageCanList(@Nullable RecyclerPlace recyclerPlace);
+    List<GarbageCan> getGarbageCanList(@Nullable RecyclerPlace recyclerPlace) throws BmobException;
 }

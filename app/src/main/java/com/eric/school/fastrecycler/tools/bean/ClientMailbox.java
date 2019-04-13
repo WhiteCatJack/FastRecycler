@@ -1,5 +1,7 @@
 package com.eric.school.fastrecycler.tools.bean;
 
+import com.eric.school.fastrecycler.tools.bmobsync.SyncBmobObject;
+
 import cn.bmob.v3.BmobObject;
 import cn.bmob.v3.datatype.BmobDate;
 
@@ -9,7 +11,7 @@ import cn.bmob.v3.datatype.BmobDate;
  * @author 泽乾
  * createAt 2019/4/10 0010 19:42
  */
-public class ClientMailbox extends BmobObject {
+public class ClientMailbox extends SyncBmobObject {
     private FRUser user;
     private boolean valid = true;
     private BmobDate startTime;

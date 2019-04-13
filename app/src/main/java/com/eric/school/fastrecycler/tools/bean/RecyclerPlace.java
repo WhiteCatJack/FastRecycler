@@ -1,5 +1,7 @@
 package com.eric.school.fastrecycler.tools.bean;
 
+import com.eric.school.fastrecycler.tools.bmobsync.SyncBmobObject;
+
 import cn.bmob.v3.BmobObject;
 
 /**
@@ -8,7 +10,7 @@ import cn.bmob.v3.BmobObject;
  * @author 泽乾
  * createAt 2019/4/8 0008 20:29
  */
-public class RecyclerPlace extends BmobObject {
+public class RecyclerPlace extends SyncBmobObject {
     private FRUser recycler;
     private double latitude;
     private double longitude;

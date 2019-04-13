@@ -1,5 +1,7 @@
 package com.eric.school.fastrecycler.tools.bean;
 
+import com.eric.school.fastrecycler.tools.bmobsync.SyncBmobObject;
+
 import cn.bmob.v3.BmobObject;
 import cn.bmob.v3.datatype.BmobDate;
 
@@ -9,7 +11,7 @@ import cn.bmob.v3.datatype.BmobDate;
  * @author 泽乾
  * createAt 2019/3/24 0024 17:05
  */
-public class GarbageRecord extends BmobObject {
+public class GarbageRecord extends SyncBmobObject {
     private GarbageCan garbageCan;
     private BmobDate time;
     private double volumeChange;

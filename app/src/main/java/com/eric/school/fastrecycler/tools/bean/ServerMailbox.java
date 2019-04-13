@@ -1,5 +1,7 @@
 package com.eric.school.fastrecycler.tools.bean;
 
+import com.eric.school.fastrecycler.tools.bmobsync.SyncBmobObject;
+
 import cn.bmob.v3.BmobObject;
 
 /**
@@ -8,7 +10,7 @@ import cn.bmob.v3.BmobObject;
  * @author 泽乾
  * createAt 2019/4/10 0010 19:42
  */
-public class ServerMailbox extends BmobObject {
+public class ServerMailbox extends SyncBmobObject {
     private FRUser user;
     private boolean valid = true;
     private ClientMailbox mail;

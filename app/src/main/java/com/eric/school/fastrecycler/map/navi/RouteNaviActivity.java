@@ -31,7 +31,7 @@ import com.autonavi.tbt.TrafficFacilityInfo;
 import com.eric.school.fastrecycler.R;
 import com.eric.school.fastrecycler.tools.base.BaseActivity;
 import com.eric.school.fastrecycler.tools.bean.GarbageRecord;
-import com.eric.school.fastrecycler.tools.util.AMapUtil;
+import com.eric.school.fastrecycler.tools.util.AMapUtils;
 import com.eric.school.fastrecycler.tools.util.AndroidUtils;
 
 import java.util.ArrayList;
@@ -105,8 +105,8 @@ public class RouteNaviActivity extends BaseActivity implements AMapNaviListener,
     @Override
     public void onInitNaviSuccess() {
         mAMapNavi.calculateRideRoute(
-                AMapUtil.convertToNaviLatLng(path.get(nowStart)),
-                AMapUtil.convertToNaviLatLng(path.get(nowEnd))
+                AMapUtils.convertToNaviLatLng(path.get(nowStart)),
+                AMapUtils.convertToNaviLatLng(path.get(nowEnd))
         );
     }
 
@@ -168,8 +168,8 @@ public class RouteNaviActivity extends BaseActivity implements AMapNaviListener,
                             return;
                         }
                         mAMapNavi.calculateRideRoute(
-                                AMapUtil.convertToNaviLatLng(path.get(nowStart)),
-                                AMapUtil.convertToNaviLatLng(path.get(nowEnd))
+                                AMapUtils.convertToNaviLatLng(path.get(nowStart)),
+                                AMapUtils.convertToNaviLatLng(path.get(nowEnd))
                         );
                     }
                 });

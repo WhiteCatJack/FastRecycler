@@ -1,5 +1,7 @@
 package com.eric.school.fastrecycler.tools.bean;
 
+import com.eric.school.fastrecycler.tools.bmobsync.SyncBmobObject;
+
 import cn.bmob.v3.BmobObject;
 
 /**
@@ -8,7 +10,7 @@ import cn.bmob.v3.BmobObject;
  * @author 泽乾
  * createAt 2019/3/24 0024 17:05
  */
-public class GarbageCan extends BmobObject {
+public class GarbageCan extends SyncBmobObject {
     private String areaCode;
     private String blockCode;
     private int number;

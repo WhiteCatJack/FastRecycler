@@ -21,7 +21,7 @@ import java.util.List;
  * @author 泽乾
  * createAt 2019/4/9 0009 14:18
  */
-public class AMapUtil {
+public class AMapUtils {
 
     /**
      * 把LatLng对象转化为LatLonPoint对象
