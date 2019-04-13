@@ -1,10 +1,4 @@
 package com.eric.school.fastrecycler.tools.datasource.garbagecan;
-
-import android.support.annotation.NonNull;
-
-import com.eric.school.fastrecycler.tools.base.RpcCallback;
-import com.eric.school.fastrecycler.tools.bean.RecyclerPlace;
-
 /**
  * Description.
  *

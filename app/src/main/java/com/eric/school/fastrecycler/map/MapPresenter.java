@@ -122,10 +122,10 @@ public class MapPresenter implements IMapContract.Presenter {
                     Thread.sleep(15000);
 
                     SyncBmobQuery<ServerMailbox> serverMBQuery = new SyncBmobQuery<>();
-                    serverMBQuery.addWhereEqualTo("user", UserEngine.getInstance().getCurrentUser().getObjectId());
-                    serverMBQuery.addWhereEqualTo("mail", clientMailId);
-                    serverMBQuery.addWhereEqualTo("valid", true);
-                    serverMBQuery.order("-createdAt");
+                    serverMBQuery.addWhereEqualTo("user", UserEngine.getInstance().getCurrentUser().getObjectId())
+                            .addWhereEqualTo("mail", clientMailId)
+                            .addWhereEqualTo("valid", true)
+                            .order("-createdAt");
                     List<ServerMailbox> temp = serverMBQuery.syncFindObjects();
                     if (temp.size() < 1) throw new BmobException("Server not replied!");
                     ServerMailbox serverMail = temp.get(0);

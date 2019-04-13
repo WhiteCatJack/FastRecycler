@@ -68,8 +68,8 @@ class GarbageCanDataSourceImpl extends GarbageCanDataSource {
         }
         // 此时recyclerPlace对象一定非空
         SyncBmobQuery<GarbageCan> garbageCanBmobQuery = new SyncBmobQuery<>();
-        garbageCanBmobQuery.addWhereEqualTo("areaCode", recyclerPlace.getAreaCode());
-        garbageCanBmobQuery.addWhereEqualTo("blockCode", recyclerPlace.getBlockCode());
+        garbageCanBmobQuery.addWhereEqualTo("areaCode", recyclerPlace.getAreaCode())
+                .addWhereEqualTo("blockCode", recyclerPlace.getBlockCode());
         return garbageCanBmobQuery.syncFindObjects();
     }
 }
