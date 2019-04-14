@@ -96,4 +96,16 @@ public class AndroidUtils {
     public static void showAlert(Context context, @StringRes int contentId) {
         showAlert(context, getString(contentId));
     }
+
+    public static void showErrorMainThread(Activity activity, final Exception e) {
+        if (activity == null) {
+            return;
+        }
+        activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                AndroidUtils.showError(e.getMessage());
+            }
+        });
+    }
 }

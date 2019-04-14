@@ -46,7 +46,7 @@ class GarbageCanDataSourceImpl extends GarbageCanDataSource {
     @Override
     public RecyclerPlace getRecyclerPlace() throws BmobException {
         RecyclerPlace result = null;
-        SyncBmobQuery<RecyclerPlace> recyclerPlaceBmobQuery = new SyncBmobQuery<>();
+        SyncBmobQuery<RecyclerPlace> recyclerPlaceBmobQuery = new SyncBmobQuery<>(RecyclerPlace.class);
         recyclerPlaceBmobQuery.addWhereEqualTo("recycler", UserEngine.getInstance().getCurrentUser().getObjectId());
         List<RecyclerPlace> temp = recyclerPlaceBmobQuery.syncFindObjects();
         if (temp.size() != 1) throw new BmobException("Recycler place count illegal!");
@@ -67,7 +67,7 @@ class GarbageCanDataSourceImpl extends GarbageCanDataSource {
             }
         }
         // 此时recyclerPlace对象一定非空
-        SyncBmobQuery<GarbageCan> garbageCanBmobQuery = new SyncBmobQuery<>();
+        SyncBmobQuery<GarbageCan> garbageCanBmobQuery = new SyncBmobQuery<>(GarbageCan.class);
         garbageCanBmobQuery.addWhereEqualTo("areaCode", recyclerPlace.getAreaCode())
                 .addWhereEqualTo("blockCode", recyclerPlace.getBlockCode());
         return garbageCanBmobQuery.syncFindObjects();

@@ -79,7 +79,7 @@ public class MapPresenter implements IMapContract.Presenter {
                         }
                     });
                 } catch (final BmobException e) {
-                    dealException(e);
+                    AndroidUtils.showErrorMainThread(mView, e);
                 }
             }
         };
@@ -105,7 +105,7 @@ public class MapPresenter implements IMapContract.Presenter {
         final Date startTime = Utils.fromISO(startTimeISO);
         final Date endTime = Utils.fromISO(endTimeISO);
         if (startTime == null || endTime == null) {
-            dealException(new IllegalStateException("Time is not a ISO!"));
+            AndroidUtils.showErrorMainThread(mView, new IllegalStateException("Time is not a ISO!"));
             return;
         }
         Runnable task = new Runnable() {
@@ -121,7 +121,7 @@ public class MapPresenter implements IMapContract.Presenter {
                     // 等待后台处理
                     Thread.sleep(15000);
 
-                    SyncBmobQuery<ServerMailbox> serverMBQuery = new SyncBmobQuery<>();
+                    SyncBmobQuery<ServerMailbox> serverMBQuery = new SyncBmobQuery<>(ServerMailbox.class);
                     serverMBQuery.addWhereEqualTo("user", UserEngine.getInstance().getCurrentUser().getObjectId())
                             .addWhereEqualTo("mail", clientMailId)
                             .addWhereEqualTo("valid", true)
@@ -133,7 +133,7 @@ public class MapPresenter implements IMapContract.Presenter {
                     serverMail.syncUpdate(serverMail.getObjectId());
                     List<String> garbageCanIdList = new ArrayList<>(Arrays.asList(serverMail.getGarbageCanList().split(",")));
 
-                    SyncBmobQuery<GarbageCan> query = new SyncBmobQuery<>();
+                    SyncBmobQuery<GarbageCan> query = new SyncBmobQuery<>(GarbageCan.class);
                     query.addWhereContainedIn("objectId", garbageCanIdList);
                     List<GarbageCan> resultList = query.syncFindObjects();
 
@@ -153,9 +153,9 @@ public class MapPresenter implements IMapContract.Presenter {
                         }
                     });
                 } catch (BmobException e) {
-                    dealException(e);
+                    AndroidUtils.showErrorMainThread(mView, e);
                 } catch (InterruptedException e) {
-                    dealException(e);
+                    AndroidUtils.showErrorMainThread(mView, e);
                 }
             }
         };
@@ -181,14 +181,5 @@ public class MapPresenter implements IMapContract.Presenter {
                 .position(new LatLng(latitude, longitude))
                 .draggable(false)
                 .icon(BitmapDescriptorFactory.fromBitmap(AndroidUtils.loadBitmapFromView(markerView)));
-    }
-
-    private void dealException(final Exception e) {
-        mView.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                AndroidUtils.showError(e.getMessage());
-            }
-        });
     }
 }
