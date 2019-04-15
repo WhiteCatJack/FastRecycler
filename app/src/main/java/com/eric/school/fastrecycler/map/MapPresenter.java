@@ -127,10 +127,13 @@ public class MapPresenter implements IMapContract.Presenter {
                             .addWhereEqualTo("valid", true)
                             .order("-createdAt");
                     List<ServerMailbox> temp = serverMBQuery.syncFindObjects();
-                    if (temp.size() < 1) throw new BmobException("Server not replied!");
+                    if (temp.size() < 1) {
+                        throw new BmobException("Server not replied!");
+                    }
                     ServerMailbox serverMail = temp.get(0);
                     serverMail.setValid(false);
                     serverMail.syncUpdate(serverMail.getObjectId());
+                    serverMail.syncDelete();
                     List<String> garbageCanIdList = new ArrayList<>(Arrays.asList(serverMail.getGarbageCanList().split(",")));
 
                     SyncBmobQuery<GarbageCan> query = new SyncBmobQuery<>(GarbageCan.class);
@@ -152,9 +155,7 @@ public class MapPresenter implements IMapContract.Presenter {
                             mView.startNavigate(path);
                         }
                     });
-                } catch (BmobException e) {
-                    AndroidUtils.showErrorMainThread(mView, e);
-                } catch (InterruptedException e) {
+                } catch (Exception e) {
                     AndroidUtils.showErrorMainThread(mView, e);
                 }
             }

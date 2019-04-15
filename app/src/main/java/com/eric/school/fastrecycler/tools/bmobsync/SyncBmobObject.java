@@ -56,4 +56,23 @@ public class SyncBmobObject extends BmobObject {
             throw syncBmobResult.exception;
         }
     }
+
+    public void syncDelete() throws BmobException {
+        final SyncBmobResult<String> syncBmobResult = new SyncBmobResult<>();
+        final CountDownLatch countDownLatch = new CountDownLatch(1);
+        delete(new UpdateListener() {
+            @Override
+            public void done(BmobException e) {
+                syncBmobResult.setUp(null, e);
+                countDownLatch.countDown();
+            }
+        });
+        try {
+            countDownLatch.await();
+        } catch (InterruptedException ignore) {
+        }
+        if (syncBmobResult.exception != null) {
+            throw syncBmobResult.exception;
+        }
+    }
 }
