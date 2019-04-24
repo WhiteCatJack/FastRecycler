@@ -36,7 +36,7 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     protected boolean checkIfLogin() {
-        if (needCheckLogin() && UserEngine.getInstance().isSignedIn()) {
+        if (needCheckLogin() && !UserEngine.getInstance().isSignedIn()) {
             AndroidUtils.showWarning(AndroidUtils.getApplicationContext().getResources().getString(R.string.warning_not_sign_in));
             Navigation.goToSignInActivity(this);
             return false;

@@ -36,6 +36,9 @@ import com.eric.school.fastrecycler.tools.util.AndroidUtils;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import cn.bmob.v3.datatype.BmobDate;
 import cn.bmob.v3.exception.BmobException;
@@ -54,6 +57,8 @@ public class RouteNaviActivity extends BaseActivity implements AMapNaviListener,
     private AMapNavi mAMapNavi;
 
     private int nowStart = 0, nowEnd = 1;
+
+    private ExecutorService mExecutor = new ScheduledThreadPoolExecutor(1);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -108,6 +113,23 @@ public class RouteNaviActivity extends BaseActivity implements AMapNaviListener,
                 AMapUtils.convertToNaviLatLng(path.get(nowStart)),
                 AMapUtils.convertToNaviLatLng(path.get(nowEnd))
         );
+
+        mExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                RouteNaviActivity.this.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        onArriveDestination();
+                    }
+                });
+            }
+        });
     }
 
     @Override
@@ -328,6 +350,17 @@ public class RouteNaviActivity extends BaseActivity implements AMapNaviListener,
     @Override
     public void onCalculateRouteSuccess(AMapCalcRouteResult aMapCalcRouteResult) {
         mAMapNavi.startNavi(NaviType.EMULATOR);
+        mExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                onArriveDestination();
+            }
+        });
     }
 
     @Override

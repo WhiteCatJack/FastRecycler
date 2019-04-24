@@ -51,6 +51,7 @@ public class SignInActivity extends BaseActivity {
                         dismissLoadingDialog();
                         if (e == null) {
                             Navigation.goToMapActivity(getContext());
+                            finish();
                         } else {
                             AndroidUtils.showWarning(e.getMessage());
                         }

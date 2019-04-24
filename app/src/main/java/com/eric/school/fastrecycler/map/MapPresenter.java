@@ -2,19 +2,17 @@ package com.eric.school.fastrecycler.map;
 
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.TextView;
 
 import com.amap.api.maps.model.BitmapDescriptorFactory;
 import com.amap.api.maps.model.LatLng;
 import com.amap.api.maps.model.MarkerOptions;
 import com.amap.api.services.core.LatLonPoint;
 import com.eric.school.fastrecycler.R;
-import com.eric.school.fastrecycler.tools.bean.ClientMailbox;
 import com.eric.school.fastrecycler.tools.bean.GarbageCan;
 import com.eric.school.fastrecycler.tools.bean.RecyclerPlace;
-import com.eric.school.fastrecycler.tools.bean.ServerMailbox;
 import com.eric.school.fastrecycler.tools.bmobsync.SyncBmobQuery;
 import com.eric.school.fastrecycler.tools.datasource.garbagecan.GarbageCanDataSource;
-import com.eric.school.fastrecycler.tools.user.UserEngine;
 import com.eric.school.fastrecycler.tools.util.AMapUtils;
 import com.eric.school.fastrecycler.tools.util.AndroidUtils;
 import com.eric.school.fastrecycler.tools.util.Utils;
@@ -26,11 +24,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import cn.bmob.v3.BmobQuery;
-import cn.bmob.v3.datatype.BmobDate;
 import cn.bmob.v3.exception.BmobException;
-import cn.bmob.v3.listener.SaveListener;
-import cn.bmob.v3.listener.UpdateListener;
 
 /**
  * Description.
@@ -100,6 +94,8 @@ public class MapPresenter implements IMapContract.Presenter {
         }
     }
 
+    private boolean test = true;
+
     @Override
     public void clickRouteRequest(String startTimeISO, String endTimeISO) {
         final Date startTime = Utils.fromISO(startTimeISO);
@@ -112,32 +108,58 @@ public class MapPresenter implements IMapContract.Presenter {
             @Override
             public void run() {
                 try {
-                    ClientMailbox clientMail = new ClientMailbox();
-                    clientMail.setUser(UserEngine.getInstance().getCurrentUser());
-                    clientMail.setStartTime(new BmobDate(startTime));
-                    clientMail.setEndTime(new BmobDate(endTime));
-                    String clientMailId = clientMail.syncSave();
+                    if (test) {
+                        List<String> garbageCanIdList = new ArrayList<>(Arrays.asList(
+                                "8451eb1f52", "17d56d79f7", "025dde8c81"
+                        ));
 
-                    // 等待后台处理
-                    Thread.sleep(15000);
+                        SyncBmobQuery<GarbageCan> query = new SyncBmobQuery<>(GarbageCan.class);
+                        query.addWhereContainedIn("objectId", garbageCanIdList);
+                        List<GarbageCan> resultList = query.syncFindObjects();
 
-                    SyncBmobQuery<ServerMailbox> serverMBQuery = new SyncBmobQuery<>(ServerMailbox.class);
-                    serverMBQuery.addWhereEqualTo("user", UserEngine.getInstance().getCurrentUser().getObjectId())
-                            .addWhereEqualTo("mail", clientMailId)
-                            .addWhereEqualTo("valid", true)
-                            .order("-createdAt");
-                    List<ServerMailbox> temp = serverMBQuery.syncFindObjects();
-                    if (temp.size() < 1) {
-                        throw new BmobException("Server not replied!");
+                        List<LatLonPoint> checkPoints = new ArrayList<>();
+                        checkPoints.add(new LatLonPoint(mRecyclerPlace.getLatitude(), mRecyclerPlace.getLongitude()));
+                        for (GarbageCan can : resultList) {
+                            checkPoints.add(new LatLonPoint(can.getLatitude(), can.getLongitude()));
+                        }
+                        // 计算TSP问题
+                        final ArrayList<LatLonPoint> path = AMapUtils.sortWayPointSeriesShortestPath(mView, checkPoints);
+                        path.add(new LatLonPoint(mRecyclerPlace.getLatitude(), mRecyclerPlace.getLongitude()));
+
+                        mView.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                mView.startNavigate(path);
+                            }
+                        });
+                        return;
                     }
-                    ServerMailbox serverMail = temp.get(0);
-                    serverMail.setValid(false);
-                    serverMail.syncUpdate(serverMail.getObjectId());
-                    serverMail.syncDelete();
-                    List<String> garbageCanIdList = new ArrayList<>(Arrays.asList(serverMail.getGarbageCanList().split(",")));
+//                    ClientMailbox clientMail = new ClientMailbox();
+//                    clientMail.setUser(UserEngine.getInstance().getCurrentUser());
+//                    clientMail.setStartTime(new BmobDate(startTime));
+//                    clientMail.setEndTime(new BmobDate(endTime));
+//                    String clientMailId = clientMail.syncSave();
+//
+//                    // 等待后台处理
+//                    Thread.sleep(15000);
+//
+//                    SyncBmobQuery<ServerMailbox> serverMBQuery = new SyncBmobQuery<>(ServerMailbox.class);
+//                    serverMBQuery.addWhereEqualTo("user", UserEngine.getInstance().getCurrentUser().getObjectId())
+//                            .addWhereEqualTo("mail", clientMailId)
+//                            .addWhereEqualTo("valid", true)
+//                            .order("-createdAt");
+//                    List<ServerMailbox> temp = serverMBQuery.syncFindObjects();
+//                    if (temp.size() < 1) {
+//                        throw new BmobException("Server not replied!");
+//                    }
+//                    ServerMailbox serverMail = temp.get(0);
+//                    serverMail.setValid(false);
+//                    serverMail.syncUpdate(serverMail.getObjectId());
+//                    serverMail.syncDelete();
+//                    List<String> garbageCanIdList = new ArrayList<>(Arrays.asList(serverMail.getGarbageCanList().split(",")));
 
                     SyncBmobQuery<GarbageCan> query = new SyncBmobQuery<>(GarbageCan.class);
-                    query.addWhereContainedIn("objectId", garbageCanIdList);
+//                    query.addWhereContainedIn("objectId", garbageCanIdList);
                     List<GarbageCan> resultList = query.syncFindObjects();
 
                     List<LatLonPoint> checkPoints = new ArrayList<>();
@@ -164,8 +186,8 @@ public class MapPresenter implements IMapContract.Presenter {
     }
 
     private <T> MarkerOptions convertToMarkerOptions(T data) {
-        int layoutId = 0;
-        double latitude = 0, longitude = 0;
+        int layoutId;
+        double latitude, longitude;
         if (data instanceof GarbageCan) {
             layoutId = R.layout.view_garbage_can_marker;
             latitude = ((GarbageCan) data).getLatitude();
@@ -178,9 +200,13 @@ public class MapPresenter implements IMapContract.Presenter {
             return null;
         }
         View markerView = LayoutInflater.from(mView).inflate(layoutId, null, false);
+        if (layoutId == R.layout.view_garbage_can_marker) {
+            TextView numberTextView = markerView.findViewById(R.id.tv_number);
+            numberTextView.setText(String.valueOf(((GarbageCan) data).getNumber()));
+        }
         return new MarkerOptions()
                 .position(new LatLng(latitude, longitude))
                 .draggable(false)
-                .icon(BitmapDescriptorFactory.fromBitmap(AndroidUtils.loadBitmapFromView(markerView)));
+                .icon(BitmapDescriptorFactory.fromView(markerView));
     }
 }

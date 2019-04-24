@@ -2,7 +2,6 @@ package com.eric.school.fastrecycler.tools.bmobsync;
 
 import com.eric.school.fastrecycler.tools.bean.GarbageCan;
 import com.eric.school.fastrecycler.tools.bean.RecyclerPlace;
-import com.eric.school.fastrecycler.tools.bean.ServerMailbox;
 
 import java.util.List;
 
@@ -23,13 +22,6 @@ class SyncBmobQueryFindListenerFactory {
             return (FindListener<T>) new FindListener<GarbageCan>() {
                 @Override
                 public void done(List<GarbageCan> list, BmobException e) {
-                    reflect.done((List<T>) list, e);
-                }
-            };
-        } else if (classEquals(ServerMailbox.class, clazz)) {
-            return (FindListener<T>) new FindListener<ServerMailbox>() {
-                @Override
-                public void done(List<ServerMailbox> list, BmobException e) {
                     reflect.done((List<T>) list, e);
                 }
             };

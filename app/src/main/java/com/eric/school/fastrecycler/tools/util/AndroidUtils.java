@@ -14,14 +14,13 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.Px;
 import android.support.annotation.StringRes;
 import android.util.Base64;
 import android.view.View;
 import android.widget.Toast;
 
 import com.eric.school.fastrecycler.R;
-
-import java.io.ByteArrayOutputStream;
 
 import cn.bmob.v3.Bmob;
 import es.dmoral.toasty.Toasty;
@@ -37,21 +36,17 @@ public class AndroidUtils {
         return Bmob.getApplicationContext();
     }
 
-    public static Bitmap loadBitmapFromView(View v) {
-        if (v == null) {
-            return null;
-        }
-        Bitmap screenshot;
-        screenshot = Bitmap.createBitmap(v.getWidth(), v.getHeight(), Bitmap.Config.ARGB_4444);
-        Canvas canvas = new Canvas(screenshot);
-        // 我们在用滑动View获得它的Bitmap时候，获得的是整个View的区域（包括隐藏的），如果想得到当前区域，需要重新定位到当前可显示的区域
-        canvas.translate(-v.getScrollX(), -v.getScrollY());
-        // 将 view 画到画布上
-        v.draw(canvas);
-        return screenshot;
+    public static int toPx(float dpValue) {
+        final float scale = getApplicationContext().getResources().getDisplayMetrics().density;
+        return (int) (dpValue * scale + 0.5f);
     }
 
-    public static String getUnknownErrorString(){
+    public static int toDp(int pxValue) {
+        final float scale = getApplicationContext().getResources().getDisplayMetrics().density;
+        return (int) ((float) pxValue / scale + 0.5f);
+    }
+
+    public static String getUnknownErrorString() {
         return getString(R.string.unknown_error);
     }
 
@@ -108,4 +103,5 @@ public class AndroidUtils {
             }
         });
     }
+
 }

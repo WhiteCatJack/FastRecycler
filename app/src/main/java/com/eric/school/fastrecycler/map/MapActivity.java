@@ -4,8 +4,10 @@ import android.Manifest;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Intent;
-import android.support.v4.app.ActivityCompat;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -25,26 +27,18 @@ import com.amap.api.services.core.LatLonPoint;
 import com.eric.school.fastrecycler.R;
 import com.eric.school.fastrecycler.map.navi.RouteNaviActivity;
 import com.eric.school.fastrecycler.tools.base.BaseActivity;
-import com.eric.school.fastrecycler.tools.bean.ClientMailbox;
 import com.eric.school.fastrecycler.tools.bean.GarbageCan;
 import com.eric.school.fastrecycler.tools.bean.GarbageRecord;
 import com.eric.school.fastrecycler.tools.bean.RecyclerPlace;
-import com.eric.school.fastrecycler.tools.bean.ServerMailbox;
-import com.eric.school.fastrecycler.tools.user.UserEngine;
 import com.eric.school.fastrecycler.tools.util.AndroidUtils;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
-import cn.bmob.v3.BmobQuery;
 import cn.bmob.v3.datatype.BmobDate;
 import cn.bmob.v3.exception.BmobException;
-import cn.bmob.v3.listener.FindListener;
 import cn.bmob.v3.listener.SaveListener;
-import cn.bmob.v3.listener.UpdateListener;
 
 public class MapActivity extends BaseActivity implements IMapContract.View {
 
@@ -59,6 +53,7 @@ public class MapActivity extends BaseActivity implements IMapContract.View {
     private AMap mAMap;
     private List<GarbageCan> mGarbageCanList;
     private RecyclerPlace mRecyclerPlace;
+    private boolean mPermissionsGranted;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,6 +65,9 @@ public class MapActivity extends BaseActivity implements IMapContract.View {
         mMapView.onCreate(savedInstanceState);
 
         checkPermission();
+    }
+
+    private void init() {
         initAMap();
         if (checkIfLogin()) {
             mPresenter.getMarkerData();
@@ -99,8 +97,33 @@ public class MapActivity extends BaseActivity implements IMapContract.View {
      * 确认所需权限
      */
     private void checkPermission() {
-        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION}, REQUEST_LOCATION_PERMISSION_CODE);
+        ActivityCompat.requestPermissions(this,
+                new String[]{
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                        Manifest.permission.READ_EXTERNAL_STORAGE,
+                        Manifest.permission.READ_PHONE_STATE
+                },
+                REQUEST_LOCATION_PERMISSION_CODE
+        );
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        boolean permission1 = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        boolean permission2 = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        boolean permission3 = ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+        boolean permission4 = ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+        boolean permission5 = ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED;
+
+        mPermissionsGranted = permission1 && permission2 && permission3 && permission4 && permission5;
+        if (mPermissionsGranted) {
+            init();
+        } else {
+            AndroidUtils.showToast("Permission not granted!");
+        }
     }
 
     /**
