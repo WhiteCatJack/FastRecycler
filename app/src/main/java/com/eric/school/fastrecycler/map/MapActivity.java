@@ -2,16 +2,14 @@ package com.eric.school.fastrecycler.map;
 
 import android.Manifest;
 import android.app.AlertDialog;
-import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.EditText;
 
 import com.amap.api.location.AMapLocation;
 import com.amap.api.location.AMapLocationClient;
@@ -28,17 +26,14 @@ import com.eric.school.fastrecycler.R;
 import com.eric.school.fastrecycler.map.navi.RouteNaviActivity;
 import com.eric.school.fastrecycler.tools.base.BaseActivity;
 import com.eric.school.fastrecycler.tools.bean.GarbageCan;
-import com.eric.school.fastrecycler.tools.bean.GarbageRecord;
+import com.eric.school.fastrecycler.tools.bean.RecycleInstruction;
 import com.eric.school.fastrecycler.tools.bean.RecyclerPlace;
 import com.eric.school.fastrecycler.tools.util.AndroidUtils;
+import com.eric.school.fastrecycler.tools.util.Utils;
 
 import java.util.ArrayList;
-import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
-
-import cn.bmob.v3.datatype.BmobDate;
-import cn.bmob.v3.exception.BmobException;
-import cn.bmob.v3.listener.SaveListener;
 
 public class MapActivity extends BaseActivity implements IMapContract.View {
 
@@ -75,20 +70,14 @@ public class MapActivity extends BaseActivity implements IMapContract.View {
         findViewById(R.id.fab_get_target_garbage_can_list).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                View layout = LayoutInflater.from(MapActivity.this).inflate(R.layout.dialog_predict_time_input, null, false);
-                final EditText startTimeInput = layout.findViewById(R.id.et_start_time);
-                final EditText endTimeInput = layout.findViewById(R.id.et_end_time);
-                View submitButton = layout.findViewById(R.id.bt_submit);
-                AlertDialog.Builder builder = new AlertDialog.Builder(MapActivity.this);
-                builder.setView(layout);
-                final Dialog dialog = builder.create();
-                submitButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        mPresenter.clickRouteRequest(startTimeInput.getText().toString(), endTimeInput.getText().toString());
-                    }
-                });
-                dialog.show();
+
+            }
+        });
+        findViewById(R.id.bt_work_arrangement).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showLoadingDialog();
+                mPresenter.getRecycleArrangement();
             }
         });
     }
@@ -97,7 +86,8 @@ public class MapActivity extends BaseActivity implements IMapContract.View {
      * 确认所需权限
      */
     private void checkPermission() {
-        ActivityCompat.requestPermissions(this,
+        ActivityCompat.requestPermissions(
+                this,
                 new String[]{
                         Manifest.permission.ACCESS_FINE_LOCATION,
                         Manifest.permission.ACCESS_COARSE_LOCATION,
@@ -159,7 +149,7 @@ public class MapActivity extends BaseActivity implements IMapContract.View {
                     });
                     //设置定位参数
                     mLocationClient.setLocationOption(new AMapLocationClientOption()
-                            .setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy));
+                                                              .setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy));
                     //启动定位
                     mLocationClient.startLocation();
                 }
@@ -232,29 +222,6 @@ public class MapActivity extends BaseActivity implements IMapContract.View {
 
     @Override
     public void reactClickGarbageCan(final GarbageCan garbageCan) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(MapActivity.this);
-        View layout = LayoutInflater.from(MapActivity.this).inflate(R.layout.dialog_input_recycled_garbage_volume, null);
-        final EditText editText = layout.findViewById(R.id.et_recycled_volume);
-        View submitButton = layout.findViewById(R.id.bt_submit);
-        builder.setView(layout);
-        final Dialog dialog = builder.create();
-        submitButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                GarbageRecord garbageRecord = new GarbageRecord();
-                garbageRecord.setGarbageCan(garbageCan);
-                garbageRecord.setTime(new BmobDate(Calendar.getInstance().getTime()));
-                garbageRecord.setVolumeChange(Double.valueOf(editText.getText().toString()));
-                garbageRecord.save(new SaveListener<String>() {
-                    @Override
-                    public void done(String s, BmobException e) {
-                        AndroidUtils.showToast("你成功上传了回收记录！");
-                        dialog.dismiss();
-                    }
-                });
-            }
-        });
-        dialog.show();
     }
 
     @Override
@@ -267,5 +234,65 @@ public class MapActivity extends BaseActivity implements IMapContract.View {
         Intent intent = new Intent(MapActivity.this, RouteNaviActivity.class);
         intent.putParcelableArrayListExtra("path", path);
         startActivity(intent);
+    }
+
+    @Override
+    public void showRecycleInstructions(List<RecycleInstruction> instructions) {
+        dismissLoadingDialog();
+
+        List<List<RecycleInstruction>> arrangement = getArrangement(instructions);
+
+        StringBuilder stringBuilder = new StringBuilder();
+        for (List<RecycleInstruction> instructionList : arrangement) {
+            String time = instructionList.get(0).getStartTime().getDate();
+            stringBuilder.append("时间:")
+                    .append(time)
+                    .append("\n");
+            for (RecycleInstruction instruction : instructionList) {
+                stringBuilder.append("回收")
+                        .append(instruction.getGarbageCan().getNumber())
+                        .append("号垃圾桶.\n");
+            }
+            stringBuilder.append("\n");
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(stringBuilder.toString());
+        builder.setPositiveButton("好", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+            }
+        });
+        builder.create().show();
+    }
+
+    private List<List<RecycleInstruction>> getArrangement(List<RecycleInstruction> instructions) {
+        List<List<RecycleInstruction>> ret = new ArrayList<>();
+
+        int i = 0;
+        while (i < instructions.size()) {
+            List<RecycleInstruction> groupInstruction = new ArrayList<>();
+            RecycleInstruction instruction = instructions.get(i);
+            Date time = Utils.fromISO(instruction.getStartTime().getDate());
+            groupInstruction.add(instruction);
+            while (true) {
+                i++;
+                if (i >= instructions.size()) {
+                    break;
+                }
+                RecycleInstruction instructionOther = instructions.get(i);
+                Date timeA = Utils.fromISO(instructionOther.getStartTime().getDate());
+                if (Math.abs(timeA.getTime() - time.getTime()) < 1000 * 60 * 10) {
+                    groupInstruction.add(instructionOther);
+                } else {
+                    break;
+                }
+            }
+            if (groupInstruction.size() > 0) {
+                ret.add(groupInstruction);
+            }
+        }
+        return ret;
     }
 }

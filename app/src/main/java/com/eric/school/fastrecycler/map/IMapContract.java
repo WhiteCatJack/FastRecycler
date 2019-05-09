@@ -3,6 +3,7 @@ package com.eric.school.fastrecycler.map;
 import com.amap.api.maps.model.MarkerOptions;
 import com.amap.api.services.core.LatLonPoint;
 import com.eric.school.fastrecycler.tools.bean.GarbageCan;
+import com.eric.school.fastrecycler.tools.bean.RecycleInstruction;
 import com.eric.school.fastrecycler.tools.bean.RecyclerPlace;
 
 import java.util.ArrayList;
@@ -23,6 +24,8 @@ interface IMapContract {
         void reactClickRecyclerPlace(RecyclerPlace recyclerPlace);
 
         void startNavigate(ArrayList<LatLonPoint> path);
+
+        void showRecycleInstructions(List<RecycleInstruction> instructions);
     }
 
     interface Presenter {
@@ -31,5 +34,7 @@ interface IMapContract {
         void clickMarker(MarkerOptions markerOptions);
 
         void clickRouteRequest(String startTimeISO, String endTimeISO);
+
+        void getRecycleArrangement();
     }
 }

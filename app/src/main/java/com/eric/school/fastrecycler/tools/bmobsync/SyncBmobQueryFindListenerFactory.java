@@ -1,6 +1,7 @@
 package com.eric.school.fastrecycler.tools.bmobsync;
 
 import com.eric.school.fastrecycler.tools.bean.GarbageCan;
+import com.eric.school.fastrecycler.tools.bean.RecycleInstruction;
 import com.eric.school.fastrecycler.tools.bean.RecyclerPlace;
 
 import java.util.List;
@@ -29,6 +30,13 @@ class SyncBmobQueryFindListenerFactory {
             return (FindListener<T>) new FindListener<RecyclerPlace>() {
                 @Override
                 public void done(List<RecyclerPlace> list, BmobException e) {
+                    reflect.done((List<T>) list, e);
+                }
+            };
+        } else if (classEquals(RecycleInstruction.class, clazz)) {
+            return (FindListener<T>) new FindListener<RecycleInstruction>() {
+                @Override
+                public void done(List<RecycleInstruction> list, BmobException e) {
                     reflect.done((List<T>) list, e);
                 }
             };

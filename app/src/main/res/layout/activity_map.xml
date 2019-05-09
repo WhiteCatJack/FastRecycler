@@ -10,6 +10,19 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <android.support.v7.widget.AppCompatButton
+        android:id="@+id/bt_work_arrangement"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|top"
+        android:layout_marginTop="24dp"
+        android:layout_marginEnd="24dp"
+        android:background="@color/colorPrimaryDark"
+        android:padding="12dp"
+        android:text="今日工作计划"
+        android:textColor="@color/text_level1_color_inverse"
+        android:textSize="17dp" />
+
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab_get_target_garbage_can_list"
         android:layout_width="wrap_content"

@@ -10,20 +10,24 @@ import com.amap.api.maps.model.MarkerOptions;
 import com.amap.api.services.core.LatLonPoint;
 import com.eric.school.fastrecycler.R;
 import com.eric.school.fastrecycler.tools.bean.GarbageCan;
+import com.eric.school.fastrecycler.tools.bean.RecycleInstruction;
 import com.eric.school.fastrecycler.tools.bean.RecyclerPlace;
 import com.eric.school.fastrecycler.tools.bmobsync.SyncBmobQuery;
 import com.eric.school.fastrecycler.tools.datasource.garbagecan.GarbageCanDataSource;
+import com.eric.school.fastrecycler.tools.user.UserEngine;
 import com.eric.school.fastrecycler.tools.util.AMapUtils;
 import com.eric.school.fastrecycler.tools.util.AndroidUtils;
 import com.eric.school.fastrecycler.tools.util.Utils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import cn.bmob.v3.datatype.BmobDate;
 import cn.bmob.v3.exception.BmobException;
 
 /**
@@ -183,6 +187,39 @@ public class MapPresenter implements IMapContract.Presenter {
             }
         };
         mExecutor.execute(task);
+    }
+
+    @Override
+    public void getRecycleArrangement() {
+        mExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                Calendar calendar = Calendar.getInstance();
+                calendar.set(Calendar.HOUR_OF_DAY, 0);
+                calendar.set(Calendar.MINUTE, 0);
+                calendar.set(Calendar.SECOND, 0);
+                calendar.set(Calendar.MILLISECOND, 0);
+                Date date = calendar.getTime();
+                BmobDate today00 = new BmobDate(date);
+
+                try {
+                    SyncBmobQuery<RecycleInstruction> query = new SyncBmobQuery<>(RecycleInstruction.class);
+                    query.addWhereEqualTo("targetUser", UserEngine.getInstance().getCurrentUser().getObjectId());
+                    query.addWhereGreaterThanOrEqualTo("startTime", today00);
+                    query.include("garbageCan");
+                    query.order("startTime");
+                    final List<RecycleInstruction> instructions = query.syncFindObjects();
+                    mView.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mView.showRecycleInstructions(instructions);
+                        }
+                    });
+                } catch (BmobException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
     private <T> MarkerOptions convertToMarkerOptions(T data) {
